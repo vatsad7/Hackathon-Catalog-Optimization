@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Autopilot — Walmart Seller Center</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --blue:#0071CE;--blue-d:#0058A3;--blue-l:#EBF4FF;
+  --green:#166534;--green-l:#DCFCE7;
+  --amber:#92400E;--amber-l:#FEF3C7;
+  --red:#991B1B;--red-l:#FEE2E2;
+  --border:#E5E7EB;--text:#111827;--muted:#6B7280;--bg:#F3F4F6;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;font-size:14px}
+
+/* SIDEBAR */
+.sidebar{width:215px;background:white;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb-header{padding:13px 16px;border-bottom:1px solid var(--border)}
+.sb-logo{color:var(--blue);font-weight:700;font-size:14px;letter-spacing:-.3px}
+.sb-acct{font-size:11px;color:var(--muted);margin-top:2px}
+.nav-section{font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.6px;padding:10px 16px 3px;margin-top:4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;font-size:13px;color:#374151;transition:background .1s;white-space:nowrap}
+.nav-item:hover{background:#F9FAFB}
+.nav-item.active{color:var(--blue);background:var(--blue-l);font-weight:600}
+.nav-item.sub{padding-left:30px;font-size:12.5px}
+.nav-item.ai-nav{background:linear-gradient(90deg,#EBF4FF,#F0F0FF);color:var(--blue-d);font-weight:700;border-left:3px solid var(--blue)}
+.nav-item.ai-nav .ai-dot{width:7px;height:7px;background:#4ADE80;border-radius:50%;margin-left:auto;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:white;border-bottom:1px solid var(--border);padding:11px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.page-title{font-size:18px;font-weight:700}
+.page-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.content{flex:1;overflow-y:auto;padding:20px 22px}
+
+/* SCREENS */
+.screen{display:none}.screen.active{display:block}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.btn-primary{background:var(--blue);color:white}.btn-primary:hover{background:var(--blue-d)}
+.btn-outline{background:white;color:#374151;border:1px solid var(--border)}.btn-outline:hover{background:#F9FAFB}
+.btn-success{background:#166534;color:white}.btn-success:hover{background:#14532D}
+.btn-danger{background:#DC2626;color:white}.btn-danger:hover{background:#B91C1C}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-ghost{background:transparent;color:var(--blue);padding:5px 8px}.btn-ghost:hover{background:var(--blue-l)}
+
+/* CARDS */
+.card{background:white;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.07);padding:18px 20px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+
+/* AUTOPILOT BANNER */
+.ap-banner{background:linear-gradient(135deg,#0058A3,#0071CE 55%,#2563EB);color:white;padding:16px 20px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.ap-text h2{font-size:15px;font-weight:600}.ap-text p{font-size:12px;opacity:.85;margin-top:3px}
+.ap-ctrl{display:flex;align-items:center;gap:16px}
+.ap-stat{text-align:center}.ap-stat-val{font-size:18px;font-weight:700}.ap-stat-lbl{font-size:10px;opacity:.8;margin-top:1px}
+.toggle-wrap{display:flex;align-items:center;gap:8px;font-size:13px}
+.toggle{width:42px;height:22px;border-radius:11px;cursor:pointer;background:rgba(255,255,255,.3);position:relative;transition:background .25s;border:none;flex-shrink:0}
+.toggle.on{background:#4ADE80}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:white;border-radius:50%;transition:transform .25s}
+.toggle.on::after{transform:translateX(20px)}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi{background:white;border-radius:10px;padding:15px 18px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.kpi-lbl{font-size:11px;color:var(--muted);margin-bottom:5px}
+.kpi-val{font-size:24px;font-weight:700}
+.kpi-val.up{color:var(--green)}.kpi-delta{font-size:11px;color:var(--green);margin-top:3px}
+
+/* AGENTS ROW */
+.agents-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.agent-tile{background:#F9FAFB;border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:all .15s}
+.agent-tile:hover{border-color:var(--blue);background:var(--blue-l)}
+.agent-tile.selected{border-color:var(--blue);background:var(--blue-l)}
+.agent-emoji{font-size:22px;margin-bottom:6px}
+.agent-name{font-size:11px;font-weight:600;margin-bottom:3px}
+.agent-status{font-size:10px;display:flex;align-items:center;justify-content:center;gap:3px}
+.pdot{width:6px;height:6px;border-radius:50%;animation:pulse 1.5s infinite}
+.pd-blue{background:var(--blue)}.pd-green{background:#10B981}.pd-gray{background:#9CA3AF}
+
+/* ACTIVITY FEED */
+.feed-item{display:flex;align-items:flex-start;gap:11px;padding:10px 0;border-bottom:1px solid #F3F4F6}
+.feed-item:last-child{border-bottom:none}
+.feed-icon{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;margin-top:1px}
+.fi-g{background:var(--green-l)}.fi-a{background:var(--amber-l)}.fi-b{background:var(--blue-l)}
+.feed-body{flex:1}
+.feed-title{font-size:13px;font-weight:500}
+.feed-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.ftag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;display:inline-block;margin-top:4px}
+.ft-auto{background:var(--green-l);color:var(--green)}.ft-review{background:var(--amber-l);color:var(--amber)}.ft-run{background:var(--blue-l);color:var(--blue-d)}
+.feed-time{font-size:11px;color:#9CA3AF;flex-shrink:0;margin-top:2px}
+
+/* REVIEW TRAY */
+.review-card{display:flex;align-items:center;gap:12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:11px 14px;cursor:pointer;transition:box-shadow .15s;margin-bottom:8px}
+.review-card:hover{box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.review-card.done{background:#F0FDF4;border-color:#A7F3D0;opacity:.7}
+.rc-img{width:38px;height:38px;background:#F3F4F6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.rc-info{flex:1}
+.rc-name{font-size:13px;font-weight:500}
+.rc-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* BADGES */
+.badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;display:inline-block}
+.b-high{background:var(--red-l);color:var(--red)}.b-med{background:var(--amber-l);color:var(--amber)}
+.b-low{background:var(--green-l);color:var(--green)}.b-cf{background:var(--blue-l);color:var(--blue-d)}
+.b-auto{background:#EDE9FE;color:#5B21B6}.b-done{background:var(--green-l);color:var(--green)}
+
+/* GUARDRAILS */
+.gr-table{width:100%;border-collapse:collapse}
+.gr-table th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 14px;border-bottom:2px solid var(--border);background:#F9FAFB}
+.gr-table td{padding:11px 14px;border-bottom:1px solid #F3F4F6;font-size:13px;vertical-align:middle}
+.gr-table tr:hover td{background:#F9FAFB}
+.gr-group-row td{background:#F9FAFB;font-weight:700;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 14px}
+.risk-sel{padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;border:1px solid;cursor:pointer;background:white;outline:none}
+.rs-low{color:var(--green);border-color:#6EE7B7}.rs-med{color:var(--amber);border-color:#FCD34D}.rs-high{color:var(--red);border-color:#FCA5A5}
+.mtog{width:34px;height:18px;border-radius:9px;cursor:pointer;background:#D1D5DB;position:relative;transition:background .2s;border:none;flex-shrink:0;display:block}
+.mtog.on{background:var(--blue)}
+.mtog::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:white;border-radius:50%;transition:transform .2s}
+.mtog.on::after{transform:translateX(16px)}
+
+/* CATALOG TABLE */
+.cat-table{width:100%;border-collapse:collapse}
+.cat-table th{text-align:left;font-size:11px;color:var(--muted);padding:9px 14px;border-bottom:2px solid var(--border);background:#F9FAFB;text-transform:uppercase;letter-spacing:.5px}
+.cat-table td{padding:10px 14px;border-bottom:1px solid #F3F4F6;font-size:13px;vertical-align:middle}
+.cat-table tr.click:hover td{background:#EBF4FF;cursor:pointer}
+.ithumb{width:34px;height:34px;background:#F3F4F6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.sch{font-size:11px;font-weight:600;padding:3px 8px;border-radius:8px;white-space:nowrap}
+.sch-done{background:var(--green-l);color:var(--green)}.sch-prog{background:var(--blue-l);color:var(--blue-d)}.sch-rev{background:var(--amber-l);color:var(--amber)}.sch-pend{background:#F3F4F6;color:#6B7280}
+
+/* TABS */
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:16px}
+.tab{padding:9px 18px;cursor:pointer;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+
+/* FILTER CHIPS */
+.frow{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.fc{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:white;font-size:12px;cursor:pointer;transition:all .15s}
+.fc.active{background:var(--blue);color:white;border-color:var(--blue)}.fc:hover:not(.active){background:#F9FAFB}
+
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:white;border-radius:12px;width:920px;max-width:100%;max-height:92vh;overflow:hidden;display:flex;flex-direction:column}
+.modal-head{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-head h2{font-size:16px;font-weight:600}
+.modal-scroll{flex:1;overflow-y:auto;padding:20px 22px}
+.modal-foot{padding:13px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:white;flex-shrink:0}
+.close-x{width:26px;height:26px;border-radius:50%;background:#F3F4F6;border:none;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+.close-x:hover{background:#E5E7EB}
+
+/* DIFF */
+.diff-sec{margin-bottom:16px}
+.diff-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px}
+.diff-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.diff-before{background:#FFF5F5;border:1px solid #FECACA;border-radius:8px;padding:12px}
+.diff-after{background:#F0FDF4;border:1px solid #A7F3D0;border-radius:8px;padding:12px}
+.diff-head{font-size:11px;font-weight:600;margin-bottom:6px;color:#6B7280}
+.diff-text{font-size:13px;line-height:1.65;color:var(--text)}
+.del{background:#FECACA;border-radius:2px;text-decoration:line-through;color:#991B1B}
+.ins{background:#A7F3D0;border-radius:2px;color:#166534;font-weight:600}
+.cbar{display:flex;align-items:center;gap:8px;margin-top:8px}
+.ctrack{flex:1;height:5px;background:#E5E7EB;border-radius:3px}
+.cfill{height:100%;border-radius:3px;background:#10B981}
+.cpct{font-size:11px;font-weight:600;color:var(--green)}
+.kwtag{display:inline-block;background:var(--blue-l);color:var(--blue-d);padding:2px 8px;border-radius:8px;font-size:11px;margin:2px}
+.kwtag.nw{background:var(--green-l);color:var(--green)}
+.agent-note{background:var(--blue-l);border-left:3px solid var(--blue);padding:10px 14px;border-radius:0 6px 6px 0;font-size:12px;color:var(--blue-d);margin-top:12px;line-height:1.5}
+.mmet{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.mmet-box{background:#F9FAFB;border-radius:8px;padding:10px 14px;text-align:center}
+.mmet-val{font-size:17px;font-weight:700}.mmet-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* IMPACT SCREEN */
+.impact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.impact-card{background:white;border-radius:10px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.07);text-align:center}
+.impact-val{font-size:28px;font-weight:700;color:var(--green)}
+.impact-lbl{font-size:12px;color:var(--muted);margin-top:4px}
+.impact-delta{font-size:11px;color:var(--green);margin-top:3px;font-weight:500}
+
+/* NOTIFICATION BADGE */
+.notif{background:#DC2626;color:white;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-left:auto}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sec-h{font-size:14px;font-weight:600;margin-bottom:4px}.sec-sh{font-size:12px;color:var(--muted);margin-bottom:14px}
+hr.divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}.empty-ico{font-size:38px;margin-bottom:10px}
+.toast{position:fixed;bottom:24px;right:24px;background:#111827;color:white;padding:12px 18px;border-radius:8px;font-size:13px;z-index:999;display:none;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.toast.show{display:flex;animation:toastin .3s ease}
+@keyframes toastin{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-header">
+    <div class="sb-logo">⊞ Seller Center</div>
+    <div class="sb-acct">Dyson, Inc. · 10000012123</div>
+  </div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <div class="nav-item" onclick="goNav('home')">🏠 Home</div>
+    <div class="nav-item" onclick="goNav('catalog')">📦 Catalog</div>
+    <div class="nav-item" onclick="goNav('pricing')">🏷️ Pricing</div>
+    <div class="nav-item" onclick="goNav('orders')">📬 Orders</div>
+    <div class="nav-item" onclick="goNav('wfs')">🚚 WFS</div>
+    <div class="nav-item" onclick="goNav('payments')">💳 Payments</div>
+    <div class="nav-item" onclick="goNav('performance')">📊 Performance</div>
+    <div class="nav-item" onclick="goNav('analytics')">📈 Analytics</div>
+
+    <div class="nav-section">Growth</div>
+    <div class="nav-item sub" onclick="goNav('assortment')">Assortment Growth</div>
+    <div class="nav-item sub" onclick="goNav('excl')">Exclusive Programs</div>
+    <div class="nav-item sub" onclick="goNav('listing')">Listing Quality</div>
+    <div class="nav-item sub" onclick="goNav('proseller')">Pro Seller</div>
+    <div class="nav-item sub" onclick="goNav('review')">Review Accelerator</div>
+    <div class="nav-item sub" onclick="goNav('seo')">SEO Marketing</div>
+    <div class="nav-item sub" onclick="goNav('creator')">Walmart Creator</div>
+    <div class="nav-item sub" onclick="goNav('brand')">Brand Manager</div>
+    <div class="nav-item ai-nav sub" onclick="goNav('autopilot')" id="nav-autopilot">
+      🤖 AI Autopilot <div class="ai-dot"></div>
+    </div>
+
+    <div class="nav-section">Other</div>
+    <div class="nav-item" onclick="goNav('ads')">📣 Advertising</div>
+    <div class="nav-item" onclick="goNav('reports')">📋 Reports</div>
+    <div class="nav-item" onclick="goNav('apps')">🔧 Apps</div>
+  </nav>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar" id="topbar">
+    <div>
+      <div class="page-title" id="pg-title">AI Autopilot</div>
+      <div class="page-sub" id="pg-sub">Autonomous catalog optimization · Last run May 27, 2026 2:14 AM PT</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:12px;color:var(--muted)">🔔</span>
+      <button class="btn btn-outline btn-sm" onclick="goNav('guardrails')">⚙ Guardrails</button>
+      <button class="btn btn-primary btn-sm" onclick="showSimRun()">▶ Run Now</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- PLACEHOLDER FOR OTHER NAV -->
+    <div id="screen-placeholder" class="screen">
+      <div class="empty"><div class="empty-ico">🔧</div><div style="font-size:16px;font-weight:600;color:#374151;margin-bottom:6px">This section is part of Walmart Seller Center</div><div style="font-size:13px">Navigate to <strong style="color:var(--blue)">AI Autopilot</strong> to see the agentic framework in action.</div><br><button class="btn btn-primary" onclick="goNav('autopilot')">→ Go to AI Autopilot</button></div>
+    </div>
+
+    <!-- SCREEN: DASHBOARD -->
+    <div id="screen-autopilot" class="screen active">
+
+      <!-- Autopilot Banner -->
+      <div class="ap-banner">
+        <div class="ap-text">
+          <h2>🤖 AI Autopilot is running</h2>
+          <p>Agents are monitoring 311 items · Next scheduled run: Tomorrow 2:00 AM PT</p>
+        </div>
+        <div class="ap-ctrl">
+          <div class="ap-stat"><div class="ap-stat-val" id="ap-items">47</div><div class="ap-stat-lbl">Items Auto-Fixed</div></div>
+          <div style="width:1px;background:rgba(255,255,255,.3);height:36px"></div>
+          <div class="ap-stat"><div class="ap-stat-val" id="ap-pending">8</div><div class="ap-stat-lbl">Awaiting Review</div></div>
+          <div style="width:1px;background:rgba(255,255,255,.3);height:36px"></div>
+          <div class="toggle-wrap">
+            <button class="toggle on" id="main-toggle" onclick="toggleAutopilot()"></button>
+            <span id="toggle-label">ON</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-lbl">📈 GMV Impact (Month)</div><div class="kpi-val up" id="kpi-gmv">+$127,450</div><div class="kpi-delta" id="kpi-gmv-d">↑ from AI-driven optimizations</div></div>
+        <div class="kpi"><div class="kpi-lbl">⚡ Items Optimized</div><div class="kpi-val" id="kpi-items">47 / 311</div><div class="kpi-delta">Auto-applied this cycle</div></div>
+        <div class="kpi"><div class="kpi-lbl">⏱ Time Saved</div><div class="kpi-val up">~14 hrs</div><div class="kpi-delta">vs. manual catalog work</div></div>
+        <div class="kpi"><div class="kpi-lbl">🎯 Listing Quality</div><div class="kpi-val" style="color:var(--amber)" id="kpi-lqs">76% → 82%</div><div class="kpi-delta">Projected after queue clears</div></div>
+      </div>
+
+      <!-- Agents Status -->
+      <div class="card">
+        <div class="card-title">Active Agents <span style="font-size:12px;font-weight:400;color:var(--muted)">Click any agent to see its work</span></div>
+        <div class="agents-row">
+          <div class="agent-tile" onclick="showAgentDetail('signal')">
+            <div class="agent-emoji">📡</div>
+            <div class="agent-name">Signal Agent</div>
+            <div class="agent-status"><span class="pdot pd-green"></span><span style="color:#166534">Done</span></div>
+          </div>
+          <div class="agent-tile selected" onclick="showAgentDetail('catalog')">
+            <div class="agent-emoji">🗂️</div>
+            <div class="agent-name">Catalog Audit</div>
+            <div class="agent-status"><span class="pdot pd-blue"></span><span style="color:var(--blue)">Running</span></div>
+          </div>
+          <div class="agent-tile" onclick="showAgentDetail('seo')">
+            <div class="agent-emoji">✍️</div>
+            <div class="agent-name">SEO & Content</div>
+            <div class="agent-status"><span class="pdot pd-green"></span><span style="color:#166534">32 done</span></div>
+          </div>
+          <div class="agent-tile" onclick="showAgentDetail('inventory')">
+            <div class="agent-emoji">📦</div>
+            <div class="agent-name">Inventory</div>
+            <div class="agent-status"><span class="pdot pd-blue"></span><span style="color:var(--blue)">Running</span></div>
+          </div>
+          <div class="agent-tile" onclick="showAgentDetail('marketing')">
+            <div class="agent-emoji">📣</div>
+            <div class="agent-name">Marketing</div>
+            <div class="agent-status"><span class="pdot pd-gray"></span><span style="color:var(--muted)">Queued</span></div>
+          </div>
+        </div>
+        <div id="agent-detail-box" style="margin-top:14px;display:none;background:#F9FAFB;border-radius:8px;padding:14px;font-size:13px;border:1px solid var(--border)">
+          <span id="agent-detail-text"></span>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <!-- Activity Feed -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Agent Activity Log <button class="btn btn-ghost btn-sm" onclick="goNav('catalog-queue')">View All →</button></div>
+          <div id="feed-list">
+            <div class="feed-item"><div class="feed-icon fi-g">✅</div><div class="feed-body"><div class="feed-title">SEO titles updated — 12 items</div><div class="feed-sub">Low risk · Auto-applied based on Walmart search signals</div><span class="ftag ft-auto">Auto-Applied</span></div><div class="feed-time">2:14 AM</div></div>
+            <div class="feed-item"><div class="feed-icon fi-g">✅</div><div class="feed-body"><div class="feed-title">Descriptions enriched — 18 items</div><div class="feed-sub">Low risk · Content quality improved 91→96%</div><span class="ftag ft-auto">Auto-Applied</span></div><div class="feed-time">2:18 AM</div></div>
+            <div class="feed-item"><div class="feed-icon fi-b">🔄</div><div class="feed-body"><div class="feed-title">WFS enrollment drafted — 8 items</div><div class="feed-sub">Medium risk · 72 Customer Favorites eligible, 8 prioritized</div><span class="ftag ft-run">In Progress</span></div><div class="feed-time">2:21 AM</div></div>
+            <div class="feed-item"><div class="feed-icon fi-a">⚠️</div><div class="feed-body"><div class="feed-title">Image audit flagged — 3 items</div><div class="feed-sub">High risk · Awaiting your review before changes apply</div><span class="ftag ft-review">Needs Review</span></div><div class="feed-time">2:23 AM</div></div>
+            <div class="feed-item"><div class="feed-icon fi-a">⚠️</div><div class="feed-body"><div class="feed-title">Pricing — Buy Box gap detected — 5 items</div><div class="feed-sub">High risk · Routed to Pricing Agent (teammate)</div><span class="ftag ft-review">Routed</span></div><div class="feed-time">2:25 AM</div></div>
+          </div>
+        </div>
+
+        <!-- Review Tray -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">🔔 Needs Your Review <span class="notif" id="review-count">8</span></div>
+          <div id="review-tray">
+            <div class="review-card" onclick="openModal(0)" id="rcard-0"><div class="rc-img">🌀</div><div class="rc-info"><div class="rc-name">Dyson Ball Animal Total Clean</div><div class="rc-sub">32 issues · Images + Attributes</div><div class="tag-row" style="margin-top:4px"><span class="badge b-high">High Risk</span><span class="badge b-cf">⭐ Customer Fav</span></div></div><span style="font-size:18px;color:#9CA3AF">›</span></div>
+            <div class="review-card" onclick="openModal(1)" id="rcard-1"><div class="rc-img">🤖</div><div class="rc-info"><div class="rc-name">Dyson 360 Vis Nav Robot Vacuum</div><div class="rc-sub">Out of stock · Restock + WFS</div><div class="tag-row" style="margin-top:4px"><span class="badge b-high">High Risk</span><span class="badge b-cf">⭐ Customer Fav</span></div></div><span style="font-size:18px;color:#9CA3AF">›</span></div>
+            <div class="review-card" onclick="openModal(2)" id="rcard-2"><div class="rc-img">💨</div><div class="rc-info"><div class="rc-name">Dyson Digital Slim Cordless</div><div class="rc-sub">30 issues · Full listing rewrite</div><div class="tag-row" style="margin-top:4px"><span class="badge b-med">Medium Risk</span></div></div><span style="font-size:18px;color:#9CA3AF">›</span></div>
+            <div class="review-card" onclick="openModal(3)" id="rcard-3"><div class="rc-img">🌬️</div><div class="rc-info"><div class="rc-name">Dyson Ball Animal 3 Complete</div><div class="rc-sub">25 issues · SEO + Images</div><div class="tag-row" style="margin-top:4px"><span class="badge b-med">Medium Risk</span><span class="badge b-cf">⭐ Customer Fav</span></div></div><span style="font-size:18px;color:#9CA3AF">›</span></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="goNav('review-all')">View all 8 items →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN: GUARDRAILS -->
+    <div id="screen-guardrails" class="screen">
+      <div class="card">
+        <div class="sec-h">Risk Guardrails</div>
+        <div class="sec-sh">Define which actions your AI agents can take automatically vs. which require your approval. Changes take effect on the next agent run.</div>
+        <div style="background:var(--blue-l);border-left:3px solid var(--blue);padding:10px 14px;border-radius:0 6px 6px 0;font-size:13px;color:var(--blue-d);margin-bottom:16px">
+          💡 <strong>How it works:</strong> Low = agent auto-applies and logs it. Medium = agent acts, you get a weekly summary. High = agent drafts the change, you approve before it goes live.
+        </div>
+        <table class="gr-table">
+          <thead><tr><th>Action Type</th><th>Risk Level</th><th>Auto-Apply</th><th>Last Run Result</th></tr></thead>
+          <tbody id="gr-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SCREEN: CATALOG QUEUE -->
+    <div id="screen-catalog-queue" class="screen">
+      <div class="card">
+        <div class="card-title">Catalog Optimization Queue <span style="font-size:12px;font-weight:400;color:var(--muted)">311 items · 47 auto-fixed · 8 need review</span></div>
+        <div class="frow">
+          <div class="fc active" onclick="filterCat(this,'all')">All (311)</div>
+          <div class="fc" onclick="filterCat(this,'review')">⚠️ Needs Review (8)</div>
+          <div class="fc" onclick="filterCat(this,'inprog')">🔄 In Progress (12)</div>
+          <div class="fc" onclick="filterCat(this,'done')">✅ Auto-Fixed (47)</div>
+          <div class="fc" onclick="filterCat(this,'pend')">⏳ Pending (244)</div>
+        </div>
+        <table class="cat-table">
+          <thead><tr><th></th><th>Item</th><th>SKU</th><th>Issues</th><th>Risk</th><th>Agent Status</th><th>Action</th></tr></thead>
+          <tbody id="cat-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SCREEN: REVIEW ALL -->
+    <div id="screen-review-all" class="screen">
+      <div class="card">
+        <div class="sec-h">Items Awaiting Review</div>
+        <div class="sec-sh">These items have been processed by agents but require your approval before publishing. Review and approve or reject each change.</div>
+        <div id="review-all-list"></div>
+      </div>
+    </div>
+
+    <!-- SCREEN: IMPACT -->
+    <div id="screen-impact" class="screen">
+      <div class="sec-h">Impact Dashboard</div>
+      <div class="sec-sh">Track GMV uplift and time saved from AI Autopilot actions</div>
+      <div class="impact-grid">
+        <div class="impact-card"><div class="impact-val">+$127,450</div><div class="impact-lbl">GMV Impact This Month</div><div class="impact-delta">↑ 18% vs last month</div></div>
+        <div class="impact-card"><div class="impact-val" style="color:var(--blue)">47</div><div class="impact-lbl">Items Auto-Optimized</div><div class="impact-delta">311 total in catalog</div></div>
+        <div class="impact-card"><div class="impact-val">~14 hrs</div><div class="impact-lbl">Time Saved</div><div class="impact-delta">vs. manual catalog work</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">LQS Score Trajectory</div>
+          <div style="display:flex;align-items:flex-end;gap:6px;height:100px;padding:8px 0">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="width:100%;background:#BFDBFE;border-radius:4px 4px 0 0;height:55px"></div>
+              <div style="font-size:10px;color:var(--muted)">Week 1</div><div style="font-size:10px;font-weight:600">76%</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="width:100%;background:#BFDBFE;border-radius:4px 4px 0 0;height:62px"></div>
+              <div style="font-size:10px;color:var(--muted)">Week 2</div><div style="font-size:10px;font-weight:600">79%</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="width:100%;background:#BFDBFE;border-radius:4px 4px 0 0;height:68px"></div>
+              <div style="font-size:10px;color:var(--muted)">Week 3</div><div style="font-size:10px;font-weight:600">81%</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="width:100%;background:#0071CE;border-radius:4px 4px 0 0;height:74px"></div>
+              <div style="font-size:10px;color:var(--muted)">Now</div><div style="font-size:10px;font-weight:700;color:var(--blue)">82%</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="width:100%;background:#BBF7D0;border-radius:4px 4px 0 0;height:82px;border:1px dashed #10B981"></div>
+              <div style="font-size:10px;color:var(--muted)">Projected</div><div style="font-size:10px;font-weight:700;color:#166534">85%</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Agents by Action Count</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="width:110px">✍️ SEO/Content</span><div style="flex:1;background:#E5E7EB;border-radius:4px;height:10px"><div style="width:72%;background:var(--blue);height:100%;border-radius:4px"></div></div><span style="width:30px;text-align:right;font-weight:600;font-size:12px">32</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="width:110px">📦 Inventory</span><div style="flex:1;background:#E5E7EB;border-radius:4px;height:10px"><div style="width:20%;background:var(--blue);height:100%;border-radius:4px"></div></div><span style="width:30px;text-align:right;font-weight:600;font-size:12px">9</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="width:110px">🗂️ Catalog</span><div style="flex:1;background:#E5E7EB;border-radius:4px;height:10px"><div style="width:13%;background:var(--blue);height:100%;border-radius:4px"></div></div><span style="width:30px;text-align:right;font-weight:600;font-size:12px">6</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="width:110px">📣 Marketing</span><div style="flex:1;background:#E5E7EB;border-radius:4px;height:10px"><div style="width:0%;background:var(--blue);height:100%;border-radius:4px"></div></div><span style="width:30px;text-align:right;font-weight:600;font-size:12px">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end content -->
+</div><!-- end main -->
+
+<!-- MODAL -->
+<div class="modal-ov" id="modal" style="display:none" onclick="closeModalOv(event)">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h2 id="modal-title">Review Changes</h2>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px" id="modal-sub"></div>
+      </div>
+      <button class="close-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-scroll" id="modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">Skip for Now</button>
+      <button class="btn btn-danger btn-sm" onclick="rejectItem()">✕ Reject</button>
+      <button class="btn btn-success" onclick="approveItem()">✓ Approve & Publish</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-ico">✅</span><span id="toast-msg">Changes approved and published</span>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────
+const items = [
+  {id:'447967-01',name:'Dyson Ball Animal Total Clean Upright Vacuum',emoji:'🌀',issues:32,risk:'high',status:'review',cf:true,gmv:48230,
+    changes:{
+      title:{before:'Dyson Ball Animal Total Clean Upright Vacuum',after:'Dyson Ball Animal Total Clean Upright Vacuum | Self-Adjusting Cleaner Head | Pet Hair | New',conf:91},
+      desc:{before:'The Dyson Ball Animal Total Clean is a powerful upright vacuum designed for deep cleaning carpets and hard floors.',after:'The Dyson Ball Animal Total Clean upright vacuum delivers exceptional suction with Dyson\'s Radial Root Cyclone™ technology. The self-adjusting cleaner head automatically seals across carpet and hard floors, capturing allergens and stubborn pet hair. Includes: Tangle-free Turbine tool, Stair tool, Combination tool, and Carbon fibre soft dusting brush. HEPA filtration captures 99.97% of particles. 5-year warranty on parts and labor.',conf:88},
+      keywords:{before:['dyson vacuum','upright vacuum','ball vacuum'],after:['dyson vacuum','upright vacuum','ball vacuum','pet hair vacuum','self-adjusting vacuum','animal vacuum','hepa vacuum','carpet vacuum'],newOnes:['pet hair vacuum','self-adjusting vacuum','animal vacuum','hepa vacuum','carpet vacuum']},
+      images:{issue:'Missing lifestyle shot and detail/accessories image. Currently 2 images; Walmart recommends 6+.',conf:72}
+    }
+  },
+  {id:'304619-01',name:'Dyson 360 Vis Nav™ Robot Vacuum | Blue/Nickel',emoji:'🤖',issues:10,risk:'high',status:'review',cf:true,gmv:62100,
+    changes:{
+      title:{before:'Dyson 360 Vis Nav™ Robot Vacuum | Blue/Nickel | New',after:'Dyson 360 Vis Nav™ Robot Vacuum | 360° Vision Navigation | Whole-Home Mapping | New',conf:94},
+      desc:{before:'Dyson\'s most powerful robot vacuum. 360° vision and full-width brush bar.',after:'The Dyson 360 Vis Nav™ robot vacuum uses 360° vision to map and navigate your home intelligently. Its full-width brush bar captures dirt across the full floor width — leaving no strip uncleaned. With Dyson\'s most powerful robot suction and CleaningAssist app control, set schedules, select zones, and monitor progress from anywhere.',conf:91},
+      keywords:{before:['robot vacuum','dyson robot'],after:['robot vacuum','dyson robot','smart robot vacuum','robot vacuum mapping','whole home robot vacuum','wifi robot vacuum','alexa robot vacuum'],newOnes:['smart robot vacuum','robot vacuum mapping','whole home robot vacuum','wifi robot vacuum','alexa robot vacuum']},
+      inventory:{issue:'Item currently OUT OF STOCK. Agent recommends: (1) Send 200 units to WFS — Nashville FC, (2) Enable backorder mode, (3) Enroll in WFS for faster restocking.',conf:89}
+    }
+  },
+  {id:'481761-01',name:'Dyson Digital Slim Cordless Vacuum | Iron/Nickel',emoji:'💨',issues:30,risk:'medium',status:'review',cf:false,gmv:22400,
+    changes:{
+      title:{before:'Dyson Digital Slim Cordless Vacuum | Iron/Nickel | New',after:'Dyson Digital Slim Cordless Vacuum | Lightweight 1.9kg | Hard Floor & Carpet | Iron/Nickel | New',conf:87},
+      desc:{before:'Lightweight cordless vacuum. Good for hard floors.',after:'The Dyson Digital Slim cordless vacuum weighs just 1.9kg, making it ideal for quick, effortless cleaning across all floor types. Dyson\'s Hyperdymium™ motor spins at up to 105,000rpm, generating powerful suction. The Digital Motorbar™ cleaner head adapts automatically between carpet and hard floors. Run time: up to 40 minutes. Converts to a handheld in seconds.',conf:84},
+      keywords:{before:['cordless vacuum','slim vacuum'],after:['cordless vacuum','slim vacuum','lightweight cordless vacuum','1.9kg vacuum','hard floor vacuum','thin cordless vacuum','dyson slim'],newOnes:['lightweight cordless vacuum','1.9kg vacuum','hard floor vacuum','thin cordless vacuum','dyson slim']}
+    }
+  },
+  {id:'411630-01',name:'Dyson Ball Animal 3 Complete Upright Vacuum | Gold',emoji:'🌬️',issues:25,risk:'medium',status:'review',cf:true,gmv:38800,
+    changes:{
+      title:{before:'Dyson Ball Animal 3 Complete Upright Vacuum | Gold | New',after:'Dyson Ball Animal 3 Complete Upright Vacuum | 25 Tools & Accessories | Pet & Allergen | Gold | New',conf:90},
+      desc:{before:'Complete cleaning kit for homes with pets.',after:'The Dyson Ball Animal 3 Complete includes 25 specialized tools and accessories for a comprehensive clean. Designed for pet owners, it tackles embedded pet hair from carpets and upholstery. The Carbon Fibre Motorized brush bar removes fine dust from hard floors. Comes with the Motorhead tool, Tangle-free turbine tool, and the full cleaning accessory kit. 5-year warranty included.',conf:86},
+      keywords:{before:['dyson animal','pet vacuum'],after:['dyson animal','pet vacuum','pet hair vacuum','allergen vacuum','upright pet vacuum','complete vacuum kit','dyson ball animal 3'],newOnes:['allergen vacuum','upright pet vacuum','complete vacuum kit','dyson ball animal 3']}
+    }
+  }
+];
+
+const catalogItems = [
+  {id:'447967-01',name:'Dyson Ball Animal Total Clean',emoji:'🌀',sku:'447967-01',issues:32,risk:'high',status:'review',cf:true},
+  {id:'304619-01',name:'Dyson 360 Vis Nav Robot Vacuum',emoji:'🤖',sku:'304619-01',issues:10,risk:'high',status:'review',cf:true},
+  {id:'481761-01',name:'Dyson Digital Slim Cordless',emoji:'💨',sku:'481761-01',issues:30,risk:'medium',status:'review',cf:false},
+  {id:'411630-01',name:'Dyson Ball Animal 3 Complete',emoji:'🌬️',sku:'411630-01',issues:25,risk:'medium',status:'review',cf:true},
+  {id:'368960-01',name:'Dyson Purifier Hot+Cool™ HP07',emoji:'🌡️',sku:'368960-01',issues:11,risk:'low',status:'done',cf:false},
+  {id:'447287-01',name:'Dyson V12 Detect Slim Absolute',emoji:'⚡',sku:'447287-01',issues:11,risk:'low',status:'done',cf:true},
+  {id:'447261-01',name:'Dyson V15 Detect Vacuum | Nickel',emoji:'🔋',sku:'447261-01',issues:15,risk:'low',status:'inprog',cf:true},
+  {id:'481766-01',name:'Dyson WashG1™ Wet Cleaner',emoji:'💧',sku:'481766-01',issues:8,risk:'low',status:'done',cf:false},
+  {id:'545824-01',name:'Dyson Purifier Hot+Cool Gen1 HP10',emoji:'❄️',sku:'545824-01',issues:12,risk:'low',status:'done',cf:false},
+  {id:'394515-01',name:'Dyson Ball Animal 3 Extra | Copper',emoji:'🟤',sku:'394515-01',issues:8,risk:'low',status:'inprog',cf:false},
+];
+
+const guardrailsData = [
+  {group:'Content & SEO',action:'Update item titles',risk:'low',auto:true,last:'12 updated'},
+  {group:'Content & SEO',action:'Enrich descriptions',risk:'low',auto:true,last:'18 updated'},
+  {group:'Content & SEO',action:'Add missing attributes',risk:'medium',auto:true,last:'6 updated'},
+  {group:'Content & SEO',action:'Full listing rewrite',risk:'high',auto:false,last:'Awaiting review'},
+  {group:'Images',action:'Flag missing images',risk:'low',auto:true,last:'3 flagged'},
+  {group:'Images',action:'Add supplemental images',risk:'high',auto:false,last:'Awaiting review'},
+  {group:'Images',action:'Replace hero image',risk:'high',auto:false,last:'Not run'},
+  {group:'Inventory',action:'Out-of-stock alerts',risk:'low',auto:true,last:'1 alerted'},
+  {group:'Inventory',action:'WFS enrollment recommendation',risk:'medium',auto:true,last:'8 queued'},
+  {group:'Inventory',action:'Simplified shipping setup',risk:'medium',auto:true,last:'4 updated'},
+  {group:'Pricing',action:'Buy Box gap alerts',risk:'low',auto:true,last:'5 alerted → Pricing Agent'},
+  {group:'Pricing',action:'Match external price',risk:'high',auto:false,last:'Routing to Pricing Agent'},
+  {group:'Marketing',action:'SEO Marketing acceptance',risk:'low',auto:true,last:'30 accepted'},
+  {group:'Marketing',action:'Flash Deals enrollment',risk:'high',auto:false,last:'11 queued'},
+  {group:'Marketing',action:'Review Accelerator',risk:'medium',auto:true,last:'7 enrolled'},
+  {group:'Assortment',action:'Add Customer Fav to catalog',risk:'high',auto:false,last:'10 queued'},
+];
+
+const agentDetails = {
+  signal:'📡 <strong>Signal Agent</strong> — Completed at 2:10 AM. Pulled 311 item LQS scores, 30 SEO suggestions from Walmart, Assortment Growth demand signals for 76 similar items, and Success Hub bulk opportunities. Identified 8 high-priority items for review.',
+  catalog:'🗂️ <strong>Catalog Audit Agent</strong> — Currently running. Classifying issues across 311 items into content gaps, keyword gaps, image gaps, stock issues, and review gaps. 244 items queued for the next cycle.',
+  seo:'✍️ <strong>SEO & Content Agent</strong> — 32 items processed. Accepted 30 Walmart SEO suggestions automatically (Low Risk). Enriched titles and descriptions for 12 Customer Favorites with expanded keyword coverage. 4 rewrites queued for human review.',
+  inventory:'📦 <strong>Inventory & Fulfillment Agent</strong> — Running. Flagged Dyson 360 Vis Nav as out-of-stock Customer Favorite (critical). Identified 8 items for WFS enrollment. Drafted simplified shipping settings for 20 Customer Favorites.',
+  marketing:'📣 <strong>Marketing Amplification Agent</strong> — Queued. Waiting for Catalog Agent to complete. Will draft Flash Deals enrollment for 11 items, Review Accelerator for 7, SEM campaigns for 34 Customer Favorites.'
+};
+
+// ── STATE ─────────────────────────────────────────────────
+let currentModal = null;
+let approvedItems = new Set();
+let rejectedItems = new Set();
+let autopilotOn = true;
+
+// ── NAVIGATION ────────────────────────────────────────────
+function goNav(id) {
+  // Hide all screens
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const screenMap = {
+    'autopilot':'autopilot','guardrails':'guardrails','catalog-queue':'catalog-queue',
+    'review-all':'review-all','impact':'impact'
+  };
+
+  const titles = {
+    autopilot:['AI Autopilot','Autonomous catalog optimization · Last run May 27, 2026 2:14 AM PT'],
+    guardrails:['Guardrails','Configure what agents can do automatically vs. what needs your approval'],
+    'catalog-queue':['Catalog Optimization Queue','311 items · Prioritized by GMV impact'],
+    'review-all':['Review Items','Items processed by agents, awaiting your approval'],
+    impact:['Impact Dashboard','GMV uplift and efficiency metrics from AI Autopilot'],
+  };
+
+  const knownNav = ['autopilot','guardrails','catalog-queue','review-all','impact'];
+
+  if (knownNav.includes(id)) {
+    document.getElementById('screen-' + id.replace('-','') ).classList.add('active');
+    if (id === 'catalog-queue') {
+      document.getElementById('screen-catalog-queue').classList.add('active');
+    }
+    const t = titles[id] || [id, ''];
+    document.getElementById('pg-title').textContent = t[0];
+    document.getElementById('pg-sub').textContent = t[1];
+
+    if (id === 'catalog-queue') renderCatalogTable('all');
+    if (id === 'guardrails') renderGuardrails();
+    if (id === 'review-all') renderReviewAll();
+  } else {
+    document.getElementById('screen-placeholder').classList.add('active');
+    document.getElementById('pg-title').textContent = id.charAt(0).toUpperCase() + id.slice(1);
+    document.getElementById('pg-sub').textContent = 'Walmart Seller Center';
+  }
+
+  // Highlight active nav
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.toLowerCase().includes('autopilot') && id === 'autopilot') n.classList.add('active');
+    if (n.textContent.toLowerCase().includes('guardrail') && id === 'guardrails') n.classList.add('active');
+  });
+}
+
+// ── GUARDRAILS ────────────────────────────────────────────
+function renderGuardrails() {
+  const tbody = document.getElementById('gr-tbody');
+  let html = '';
+  let lastGroup = '';
+  guardrailsData.forEach((row, i) => {
+    if (row.group !== lastGroup) {
+      html += `<tr class="gr-group-row"><td colspan="4">${row.group}</td></tr>`;
+      lastGroup = row.group;
+    }
+    const rClass = row.risk === 'low' ? 'rs-low' : row.risk === 'medium' ? 'rs-med' : 'rs-high';
+    const tClass = row.auto ? 'on' : '';
+    html += `<tr>
+      <td>${row.action}</td>
+      <td><select class="risk-sel ${rClass}" onchange="changeRisk(this,${i})" data-idx="${i}">
+        <option value="low" ${row.risk==='low'?'selected':''}>🟢 Low</option>
+        <option value="medium" ${row.risk==='medium'?'selected':''}>🟡 Medium</option>
+        <option value="high" ${row.risk==='high'?'selected':''}>🔴 High</option>
+      </select></td>
+      <td><button class="mtog ${tClass}" id="tog-${i}" onclick="toggleRow(${i})"></button></td>
+      <td style="color:var(--muted);font-size:12px">${row.last}</td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+function changeRisk(sel, idx) {
+  guardrailsData[idx].risk = sel.value;
+  sel.className = 'risk-sel ' + (sel.value === 'low' ? 'rs-low' : sel.value === 'medium' ? 'rs-med' : 'rs-high');
+  if (sel.value === 'high') {
+    guardrailsData[idx].auto = false;
+    document.getElementById('tog-' + idx).classList.remove('on');
+  }
+  toast('⚙️', 'Guardrail updated — takes effect on next run');
+}
+
+function toggleRow(idx) {
+  const tog = document.getElementById('tog-' + idx);
+  guardrailsData[idx].auto = !guardrailsData[idx].auto;
+  tog.classList.toggle('on', guardrailsData[idx].auto);
+  toast(guardrailsData[idx].auto ? '✅' : '⏸️', guardrailsData[idx].auto ? 'Agent will auto-apply this action' : 'Action will queue for your review');
+}
+
+// ── CATALOG TABLE ─────────────────────────────────────────
+let catFilter = 'all';
+function filterCat(el, f) {
+  catFilter = f;
+  document.querySelectorAll('.fc').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderCatalogTable(f);
+}
+function renderCatalogTable(filter) {
+  const tbody = document.getElementById('cat-tbody');
+  let rows = catalogItems;
+  if (filter === 'review') rows = rows.filter(r => r.status === 'review' && !approvedItems.has(r.id) && !rejectedItems.has(r.id));
+  else if (filter === 'inprog') rows = rows.filter(r => r.status === 'inprog');
+  else if (filter === 'done') rows = rows.filter(r => r.status === 'done' || approvedItems.has(r.id));
+  else if (filter === 'pend') rows = rows.filter(r => r.status === 'pend');
+
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">No items in this category</td></tr>`; return; }
+
+  let html = '';
+  rows.forEach(item => {
+    let status = item.status;
+    if (approvedItems.has(item.id)) status = 'done';
+    if (rejectedItems.has(item.id)) status = 'pend';
+    const sLabel = {review:'⚠️ Needs Review',inprog:'🔄 In Progress',done:'✅ Auto-Fixed',pend:'⏳ Pending'};
+    const sClass = {review:'sch-rev',inprog:'sch-prog',done:'sch-done',pend:'sch-pend'};
+    const isClickable = (status === 'review') && items.find(i => i.id === item.id);
+    const rBadge = item.risk === 'high' ? 'b-high' : item.risk === 'medium' ? 'b-med' : 'b-low';
+    html += `<tr class="${isClickable ? 'click' : ''}" ${isClickable ? `onclick="openModalById('${item.id}')"` : ''}>
+      <td><div class="ithumb">${item.emoji}</div></td>
+      <td><div style="font-weight:500;font-size:13px">${item.name}${item.cf ? ' <span style="color:#F59E0B">⭐</span>' : ''}</div></td>
+      <td style="color:var(--muted);font-size:12px">${item.sku}</td>
+      <td><span style="font-weight:600;color:${item.issues > 20 ? 'var(--red)' : item.issues > 10 ? 'var(--amber)' : 'var(--green)'}">${item.issues} issues</span></td>
+      <td><span class="badge ${rBadge}">${item.risk.charAt(0).toUpperCase()+item.risk.slice(1)}</span></td>
+      <td><span class="sch ${sClass[status]}">${sLabel[status]}</span></td>
+      <td>${isClickable ? '<button class="btn btn-outline btn-sm" onclick="openModalById(\''+item.id+'\');event.stopPropagation()">Review →</button>' : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+// ── REVIEW ALL ────────────────────────────────────────────
+function renderReviewAll() {
+  const container = document.getElementById('review-all-list');
+  let html = '';
+  items.forEach((item, idx) => {
+    const done = approvedItems.has(item.id);
+    const rejected = rejectedItems.has(item.id);
+    const rBadge = item.risk === 'high' ? 'b-high' : 'b-med';
+    html += `<div class="review-card ${done ? 'done' : ''}" id="rall-${idx}" onclick="${done||rejected ? '' : 'openModal('+idx+')'}">
+      <div class="rc-img">${item.emoji}</div>
+      <div class="rc-info">
+        <div class="rc-name">${item.name}${item.cf ? ' <span style="color:#F59E0B">⭐</span>' : ''}</div>
+        <div class="rc-sub">${item.issues} issues · ${item.id}</div>
+        <div class="tag-row" style="margin-top:4px">
+          <span class="badge ${rBadge}">${item.risk.charAt(0).toUpperCase()+item.risk.slice(1)} Risk</span>
+          ${done ? '<span class="badge b-done">✓ Approved</span>' : ''}
+          ${rejected ? '<span class="badge" style="background:#F3F4F6;color:#6B7280">✕ Rejected</span>' : ''}
+        </div>
+      </div>
+      ${!done && !rejected ? '<button class="btn btn-primary btn-sm" onclick="openModal('+idx+');event.stopPropagation()">Review →</button>' : ''}
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+// ── AGENT DETAIL ──────────────────────────────────────────
+function showAgentDetail(key) {
+  document.querySelectorAll('.agent-tile').forEach(t => t.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  const box = document.getElementById('agent-detail-box');
+  box.style.display = 'block';
+  document.getElementById('agent-detail-text').innerHTML = agentDetails[key];
+}
+
+// ── MODAL ─────────────────────────────────────────────────
+function openModalById(id) {
+  const idx = items.findIndex(i => i.id === id);
+  if (idx !== -1) openModal(idx);
+}
+
+function openModal(idx) {
+  currentModal = idx;
+  const item = items[idx];
+  const c = item.changes;
+
+  document.getElementById('modal-title').textContent = item.name;
+  document.getElementById('modal-sub').textContent = `SKU: ${item.id} · ${item.issues} issues · ${item.risk.charAt(0).toUpperCase()+item.risk.slice(1)} Risk${item.cf ? ' · ⭐ Customer Favorite' : ''}`;
+
+  let body = '';
+
+  // Metrics row
+  body += `<div class="mmet">
+    <div class="mmet-box"><div class="mmet-val" style="color:var(--amber)">${item.issues}</div><div class="mmet-lbl">Total Issues</div></div>
+    <div class="mmet-box"><div class="mmet-val" style="color:var(--green)">$${(item.gmv/1000).toFixed(0)}K</div><div class="mmet-lbl">30-Day GMV</div></div>
+    <div class="mmet-box"><div class="mmet-val" style="color:var(--blue)">${c.title ? c.title.conf : c.desc ? c.desc.conf : 88}%</div><div class="mmet-lbl">Agent Confidence</div></div>
+  </div>`;
+
+  // Title diff
+  if (c.title) {
+    body += `<div class="diff-sec"><div class="diff-lbl">📝 Title</div>
+    <div class="diff-cols">
+      <div class="diff-before"><div class="diff-head">⬅ Current</div><div class="diff-text">${c.title.before}</div></div>
+      <div class="diff-after"><div class="diff-head">→ Agent Suggestion</div><div class="diff-text"><strong>${c.title.after}</strong></div>
+        <div class="cbar"><div class="ctrack"><div class="cfill" style="width:${c.title.conf}%"></div></div><span class="cpct">${c.title.conf}% confidence</span></div>
+      </div>
+    </div></div>`;
+  }
+
+  // Description diff
+  if (c.desc) {
+    body += `<div class="diff-sec"><div class="diff-lbl">📄 Description</div>
+    <div class="diff-cols">
+      <div class="diff-before"><div class="diff-head">⬅ Current (${c.desc.before.split(' ').length} words)</div><div class="diff-text">${c.desc.before}</div></div>
+      <div class="diff-after"><div class="diff-head">→ Agent Suggestion (${c.desc.after.split(' ').length} words)</div><div class="diff-text">${c.desc.after}</div>
+        <div class="cbar"><div class="ctrack"><div class="cfill" style="width:${c.desc.conf}%"></div></div><span class="cpct">${c.desc.conf}% confidence</span></div>
+      </div>
+    </div></div>`;
+  }
+
+  // Keywords diff
+  if (c.keywords) {
+    body += `<div class="diff-sec"><div class="diff-lbl">🔑 Search Keywords</div>
+    <div class="diff-cols">
+      <div class="diff-before"><div class="diff-head">⬅ Current</div><div>${c.keywords.before.map(k=>`<span class="kwtag">${k}</span>`).join('')}</div></div>
+      <div class="diff-after"><div class="diff-head">→ After (${c.keywords.newOnes ? c.keywords.newOnes.length : 0} new)</div>
+        <div>${c.keywords.before.map(k=>`<span class="kwtag">${k}</span>`).join('')}${c.keywords.newOnes ? c.keywords.newOnes.map(k=>`<span class="kwtag nw">+ ${k}</span>`).join('') : ''}</div>
+      </div>
+    </div></div>`;
+  }
+
+  // Image issue
+  if (c.images) {
+    body += `<div class="diff-sec"><div class="diff-lbl">🖼️ Images</div>
+    <div style="background:var(--amber-l);border:1px solid #FCD34D;border-radius:8px;padding:12px">
+      <div style="font-size:13px;font-weight:500;color:var(--amber);margin-bottom:4px">⚠️ Image Audit Finding</div>
+      <div style="font-size:13px">${c.images.issue}</div>
+      <div class="cbar"><div class="ctrack"><div class="cfill" style="width:${c.images.conf}%;background:#F59E0B"></div></div><span style="font-size:11px;font-weight:600;color:var(--amber)">${c.images.conf}% confidence</span></div>
+    </div></div>`;
+  }
+
+  // Inventory issue
+  if (c.inventory) {
+    body += `<div class="diff-sec"><div class="diff-lbl">📦 Inventory & Fulfillment</div>
+    <div style="background:var(--red-l);border:1px solid #FECACA;border-radius:8px;padding:12px">
+      <div style="font-size:13px;font-weight:500;color:var(--red);margin-bottom:4px">🚨 Inventory Action Required</div>
+      <div style="font-size:13px">${c.inventory.issue}</div>
+      <div class="cbar"><div class="ctrack"><div class="cfill" style="width:${c.inventory.conf}%"></div></div><span class="cpct">${c.inventory.conf}% confidence</span></div>
+    </div></div>`;
+  }
+
+  // Agent reasoning note
+  body += `<div class="agent-note">🤖 <strong>Why the agent flagged this:</strong> This item is ${item.cf ? 'a <strong>Customer Favorite</strong> with high search demand' : 'in your top catalog items by GMV'}. With ${item.issues} listing issues, it\'s underperforming relative to its potential. The suggested changes are based on Walmart\'s search signals, competitor analysis, and Dyson brand guidelines.</div>`;
+
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+  currentModal = null;
+}
+
+function closeModalOv(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+
+function approveItem() {
+  if (currentModal === null) return;
+  const item = items[currentModal];
+  approvedItems.add(item.id);
+  const rcard = document.getElementById('rcard-' + currentModal);
+  if (rcard) {
+    rcard.classList.add('done');
+    rcard.querySelector('.rc-sub').textContent = '✓ Approved & published';
+    rcard.querySelector('.tag-row').innerHTML = '<span class="badge b-done">✓ Published</span>';
+    rcard.onclick = null;
+    rcard.querySelector('span:last-child') && (rcard.querySelector('span:last-child').style.display = 'none');
+  }
+  // Update review count
+  const remaining = 8 - approvedItems.size - rejectedItems.size;
+  document.getElementById('review-count').textContent = remaining;
+  document.getElementById('ap-pending').textContent = remaining;
+  // Update KPIs
+  const newItems = 47 + approvedItems.size;
+  document.getElementById('ap-items').textContent = newItems;
+  document.getElementById('kpi-items').textContent = newItems + ' / 311';
+  document.getElementById('kpi-gmv').textContent = '+$' + (127450 + approvedItems.size * 8200).toLocaleString();
+  closeModal();
+  toast('✅', `Changes approved & published for "${item.name.substring(0,30)}..."`);
+  if (document.getElementById('screen-review-all').classList.contains('active')) renderReviewAll();
+  if (document.getElementById('screen-catalog-queue').classList.contains('active')) renderCatalogTable(catFilter);
+}
+
+function rejectItem() {
+  if (currentModal === null) return;
+  const item = items[currentModal];
+  rejectedItems.add(item.id);
+  const rcard = document.getElementById('rcard-' + currentModal);
+  if (rcard) {
+    rcard.style.opacity = '0.5';
+    rcard.onclick = null;
+  }
+  const remaining = 8 - approvedItems.size - rejectedItems.size;
+  document.getElementById('review-count').textContent = remaining;
+  document.getElementById('ap-pending').textContent = remaining;
+  closeModal();
+  toast('↩️', 'Item rejected — agent will not re-suggest for 7 days');
+  if (document.getElementById('screen-review-all').classList.contains('active')) renderReviewAll();
+}
+
+// ── AUTOPILOT TOGGLE ──────────────────────────────────────
+function toggleAutopilot() {
+  autopilotOn = !autopilotOn;
+  const tog = document.getElementById('main-toggle');
+  tog.classList.toggle('on', autopilotOn);
+  document.getElementById('toggle-label').textContent = autopilotOn ? 'ON' : 'OFF';
+  toast(autopilotOn ? '▶️' : '⏸️', autopilotOn ? 'Autopilot reactivated — agents resuming' : 'Autopilot paused — no changes will be made');
+}
+
+// ── SIMULATE RUN ──────────────────────────────────────────
+function showSimRun() {
+  toast('🔄', 'Agent run triggered — processing 311 items...');
+  const feed = document.getElementById('feed-list');
+  if (!feed) return;
+  setTimeout(() => {
+    const newItem = document.createElement('div');
+    newItem.className = 'feed-item';
+    newItem.innerHTML = `<div class="feed-icon fi-b">🔄</div><div class="feed-body"><div class="feed-title">Manual run triggered by seller</div><div class="feed-sub">Processing catalog now — estimated 4 minutes</div><span class="ftag ft-run">Running</span></div><div class="feed-time">Just now</div>`;
+    feed.insertBefore(newItem, feed.firstChild);
+    setTimeout(() => toast('✅', 'Run complete — 3 new auto-fixes applied, 1 new item queued for review'), 3000);
+  }, 800);
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(ico, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-ico').textContent = ico;
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── INIT ──────────────────────────────────────────────────
+goNav('autopilot');
+</script>
+</body>
+</html>
