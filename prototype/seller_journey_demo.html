@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seller Expansion Studio — Demo Flow</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#0071CE;--blue-d:#0058A3;--blue-l:#EBF4FF;--green:#166534;--green-l:#DCFCE7;--amber:#92400E;--amber-l:#FEF3C7;--red:#991B1B;--red-l:#FEE2E2;--border:#E5E7EB;--text:#111827;--muted:#6B7280;--bg:#F3F4F6;--yellow:#FFC220}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;font-size:14px}
+
+/* SIDEBAR */
+.sidebar{width:215px;background:white;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb-header{padding:13px 16px;border-bottom:1px solid var(--border)}
+.sb-logo{color:var(--blue);font-weight:700;font-size:14px}
+.sb-acct{font-size:11px;color:var(--muted);margin-top:2px}
+.nav-section{font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.6px;padding:10px 16px 3px;margin-top:4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;font-size:13px;color:#374151;transition:background .1s}
+.nav-item:hover{background:#F9FAFB}
+.nav-item.active{color:var(--blue);background:var(--blue-l);font-weight:600}
+.nav-item.sub{padding-left:30px;font-size:12.5px}
+.nav-item.ai-nav{background:linear-gradient(90deg,#EBF4FF,#F0F0FF);color:var(--blue-d);font-weight:700;border-left:3px solid var(--blue)}
+.ai-dot{width:7px;height:7px;background:#4ADE80;border-radius:50%;margin-left:auto;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:white;border-bottom:1px solid var(--border);padding:11px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.pg-title{font-size:18px;font-weight:700}
+.pg-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.content{flex:1;overflow-y:auto;padding:20px 22px}
+.screen{display:none}.screen.active{display:block}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn-primary{background:var(--blue);color:white}.btn-primary:hover{background:var(--blue-d)}
+.btn-outline{background:white;color:#374151;border:1px solid var(--border)}.btn-outline:hover{background:#F9FAFB}
+.btn-success{background:#166534;color:white}.btn-success:hover{background:#14532D}
+.btn-lg{padding:12px 28px;font-size:15px;font-weight:600;border-radius:8px}
+.btn-xl{padding:16px 40px;font-size:17px;font-weight:700;border-radius:10px}
+
+/* CARDS */
+.card{background:white;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.07);padding:18px 20px;margin-bottom:16px}
+
+/* HOME PAGE BANNER */
+.opportunity-banner{background:linear-gradient(135deg,var(--blue-d),var(--blue));color:white;border-radius:12px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;cursor:pointer;transition:box-shadow .2s}
+.opportunity-banner:hover{box-shadow:0 8px 24px rgba(0,113,206,.35)}
+.ob-left h2{font-size:19px;font-weight:700;margin-bottom:4px}
+.ob-left p{font-size:13px;opacity:.85}
+.ob-badge{background:var(--yellow);color:#333;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-bottom:8px;display:inline-block}
+.ob-items{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.ob-item-tag{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500}
+.ob-right{text-align:center;flex-shrink:0;margin-left:24px}
+.ob-num{font-size:52px;font-weight:800;letter-spacing:-2px}
+.ob-lbl{font-size:11px;opacity:.7;margin-top:2px}
+
+/* CHAT INTERFACE */
+.chat-header{text-align:center;padding:32px 20px 24px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.chat-avatar{width:56px;height:56px;background:linear-gradient(135deg,var(--blue-d),var(--blue));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px}
+.chat-name{font-size:16px;font-weight:700}
+.chat-desc{font-size:13px;color:var(--muted);margin-top:4px;max-width:500px;margin-left:auto;margin-right:auto}
+
+/* ITEM CARDS */
+.item-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+.item-card{background:white;border:2px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .15s;display:flex;gap:12px;align-items:flex-start}
+.item-card:hover{border-color:var(--blue);box-shadow:0 2px 8px rgba(0,113,206,.1)}
+.item-card.selected{border-color:var(--blue);background:var(--blue-l)}
+.item-card.selected .ic-check{background:var(--blue);border-color:var(--blue);color:white}
+.ic-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px;transition:all .15s}
+.ic-body{flex:1}
+.ic-name{font-size:13px;font-weight:600;margin-bottom:4px}
+.ic-meta{display:flex;gap:6px;flex-wrap:wrap}
+.ic-tag{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600}
+.tag-demand{background:#FEF3C7;color:#92400E}
+.tag-gmv{background:#DCFCE7;color:#166534}
+.tag-cf{background:var(--blue-l);color:var(--blue-d)}
+.ic-bar{height:4px;background:#E5E7EB;border-radius:2px;margin-top:6px}
+.ic-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .5s}
+
+/* SOURCING AGENT */
+.sourcing-feed{display:flex;flex-direction:column;gap:10px}
+.sf-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:white;border-radius:8px;border:1px solid var(--border)}
+.sf-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.sf-g{background:var(--green-l)}.sf-b{background:var(--blue-l)}.sf-a{background:var(--amber-l)}
+.sf-body{flex:1}
+.sf-title{font-size:13px;font-weight:500}
+.sf-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.sf-status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px}
+.s-done{background:var(--green-l);color:var(--green)}.s-run{background:var(--blue-l);color:var(--blue-d)}.s-wait{background:#F3F4F6;color:#6B7280}
+.progress-bar{width:100%;height:6px;background:#E5E7EB;border-radius:3px;margin:16px 0}
+.progress-fill{height:100%;background:var(--blue);border-radius:3px;transition:width 1s ease}
+
+/* SUPPLIER TABLE */
+.sup-table{width:100%;border-collapse:collapse}
+.sup-table th{text-align:left;font-size:11px;color:var(--muted);padding:8px 12px;border-bottom:2px solid var(--border);background:#F9FAFB;text-transform:uppercase;letter-spacing:.5px}
+.sup-table td{padding:11px 12px;border-bottom:1px solid #F3F4F6;font-size:13px;vertical-align:middle}
+.sup-table tr:hover td{background:#F9FAFB}
+.sup-sel{background:var(--blue);color:white;border:none;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer}
+.sup-sel:hover{background:var(--blue-d)}
+.sup-sel.picked{background:var(--green);pointer-events:none}
+.star-r{color:#F59E0B}
+
+/* CONSENT CARDS */
+.consent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}
+.consent-card{background:white;border:2px solid var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .15s}
+.consent-card.on{border-color:var(--blue);background:var(--blue-l)}
+.cc-icon{font-size:32px;margin-bottom:10px}
+.cc-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.cc-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.cc-toggle{margin-top:12px;width:40px;height:22px;border-radius:11px;background:#D1D5DB;position:relative;cursor:pointer;border:none;transition:background .2s;display:block;margin-left:auto;margin-right:auto}
+.cc-toggle.on{background:var(--blue)}
+.cc-toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:white;border-radius:50%;transition:transform .2s}
+.cc-toggle.on::after{transform:translateX(18px)}
+
+/* DRAFT ITEMS */
+.draft-card{background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.07);padding:20px;margin-bottom:14px;display:flex;gap:16px}
+.dc-img{width:80px;height:80px;background:#F3F4F6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0}
+.dc-body{flex:1}
+.dc-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.dc-price{font-size:20px;font-weight:800;color:var(--blue);margin-bottom:6px}
+.dc-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.dc-lqs{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.lqs-bar{flex:1;height:6px;background:#E5E7EB;border-radius:3px}
+.lqs-fill{height:100%;background:#10B981;border-radius:3px}
+.dc-actions{display:flex;gap:8px;margin-top:10px}
+
+/* PUBLISH SUCCESS */
+.success-screen{text-align:center;padding:60px 40px}
+.success-icon{font-size:72px;margin-bottom:24px;animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.success-title{font-size:32px;font-weight:800;margin-bottom:8px}
+.success-sub{font-size:16px;color:var(--muted);margin-bottom:32px}
+.impact-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:700px;margin:0 auto 32px}
+.impact-box{background:white;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.impact-num{font-size:28px;font-weight:800;color:var(--green)}
+.impact-lbl{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#111827;color:white;padding:12px 18px;border-radius:8px;font-size:13px;z-index:999;display:none;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.toast.show{display:flex;animation:tin .3s ease}
+@keyframes tin{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* STEP INDICATOR */
+.steps{display:flex;gap:0;margin-bottom:20px;background:white;border-radius:10px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;font-size:11px;color:var(--muted);font-weight:500;text-align:center}
+.step:not(:last-child)::after{content:'';position:absolute;right:0;top:10px;width:50%;height:2px;background:var(--border)}
+.step.done:not(:last-child)::after{background:var(--blue)}
+.step-dot{width:20px;height:20px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:#6B7280;font-weight:700;z-index:1}
+.step.done .step-dot{background:var(--blue);color:white}
+.step.active .step-dot{background:white;border:2px solid var(--blue);color:var(--blue)}
+.badge-count{background:var(--blue);color:white;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sec-h{font-size:14px;font-weight:700;margin-bottom:4px}
+.sec-sh{font-size:12px;color:var(--muted);margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-header">
+    <div class="sb-logo">⊞ Seller Center</div>
+    <div class="sb-acct">Walker Gearks Good · 100009</div>
+  </div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" id="nav-home" onclick="goScreen('home')">🏠 Home</div>
+    <div class="nav-item" onclick="">📦 Catalog</div>
+    <div class="nav-item" onclick="">🏷️ Pricing</div>
+    <div class="nav-item" onclick="">📬 Orders</div>
+    <div class="nav-item" onclick="">🚚 WFS</div>
+    <div class="nav-item" onclick="">📊 Performance</div>
+    <div class="nav-item" onclick="">📈 Analytics</div>
+    <div class="nav-section">Growth</div>
+    <div class="nav-item sub" onclick="">Assortment Growth</div>
+    <div class="nav-item sub" onclick="">Listing Quality</div>
+    <div class="nav-item sub" onclick="">SEO Marketing</div>
+    <div class="nav-item sub ai-nav" id="nav-studio" onclick="goScreen('opportunities')">
+      🤖 Expansion Studio <div class="ai-dot"></div>
+    </div>
+    <div class="nav-section">Other</div>
+    <div class="nav-item" onclick="">📣 Advertising</div>
+    <div class="nav-item" onclick="">📋 Reports</div>
+  </nav>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div><div class="pg-title" id="pg-title">Home</div><div class="pg-sub" id="pg-sub">Welcome back, Walker</div></div>
+    <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)">
+      <span>🔔 3</span>
+      <span style="background:#F3F4F6;padding:4px 10px;border-radius:6px">May 27, 2026</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════════════════ HOME ══════════════════════ -->
+    <div id="screen-home" class="screen active">
+      <!-- HERO BANNER -->
+      <div class="opportunity-banner" onclick="goScreen('opportunities')">
+        <div class="ob-left">
+          <div class="ob-badge">✦ NEW · AI-Powered</div>
+          <h2>Unlock New Growth Opportunities</h2>
+          <p>Our AI has identified 10 high-demand items you're not selling — but should be. We'll handle everything from sourcing to publishing.</p>
+          <div class="ob-items">
+            <span class="ob-item-tag">🤝 Auto-Sourcing</span>
+            <span class="ob-item-tag">📝 Listing Created</span>
+            <span class="ob-item-tag">💰 Price Set</span>
+            <span class="ob-item-tag">📣 Marketing Ready</span>
+          </div>
+        </div>
+        <div class="ob-right">
+          <div class="ob-num">10</div>
+          <div class="ob-lbl">Items Ready<br>to Activate</div>
+          <div style="margin-top:14px;background:var(--yellow);color:#333;padding:8px 20px;border-radius:6px;font-weight:700;font-size:13px">Explore Now →</div>
+        </div>
+      </div>
+
+      <!-- EXISTING METRICS -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+        <div class="card" style="margin:0;text-align:center;padding:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Today's Orders</div>
+          <div style="font-size:26px;font-weight:700">0</div>
+        </div>
+        <div class="card" style="margin:0;text-align:center;padding:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Listing Quality</div>
+          <div style="font-size:26px;font-weight:700;color:#F59E0B">48%</div>
+        </div>
+        <div class="card" style="margin:0;text-align:center;padding:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Sales (30d)</div>
+          <div style="font-size:26px;font-weight:700">$0</div>
+        </div>
+        <div class="card" style="margin:0;text-align:center;padding:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">CF Opportunities</div>
+          <div style="font-size:26px;font-weight:700;color:var(--blue)">15%</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px">Grow with Success Hub</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Get personalized suggestions to help grow your business and succeed with Walmart.</div>
+        <div style="display:flex;gap:12px">
+          <div onclick="goScreen('opportunities')" style="flex:1;background:linear-gradient(135deg,var(--blue-d),var(--blue));color:white;border-radius:8px;padding:16px;cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,113,206,.4)'" onmouseout="this.style.boxShadow='none'">
+            <div style="font-size:20px;margin-bottom:6px">🚀</div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:3px">Activate New Items</div>
+            <div style="font-size:12px;opacity:.8">10 high-demand items identified for you</div>
+          </div>
+          <div style="flex:1;background:#F9FAFB;border:1px solid var(--border);border-radius:8px;padding:16px">
+            <div style="font-size:20px;margin-bottom:6px">📝</div>
+            <div style="font-weight:600;font-size:14px;margin-bottom:3px">Optimize Existing Catalog</div>
+            <div style="font-size:12px;color:var(--muted)">48% LQS — improve content on 30+ items</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ OPPORTUNITIES ══════════════════════ -->
+    <div id="screen-opportunities" class="screen">
+      <div class="chat-header">
+        <div class="chat-avatar">🤖</div>
+        <div class="chat-name">Seller Expansion Studio</div>
+        <div class="chat-desc">Hi Walker! Based on Walmart's real-time demand signals and your selling profile, here are <strong>10 items you're not selling — but should be.</strong> Each represents a verified GMV opportunity. Select the ones you want to activate and we'll handle the rest.</div>
+      </div>
+
+      <!-- STEPS -->
+      <div class="steps">
+        <div class="step done"><div class="step-dot">✓</div>Opportunities</div>
+        <div class="step active"><div class="step-dot">2</div>Select Items</div>
+        <div class="step"><div class="step-dot">3</div>Sourcing</div>
+        <div class="step"><div class="step-dot">4</div>Suppliers</div>
+        <div class="step"><div class="step-dot">5</div>Activate</div>
+        <div class="step"><div class="step-dot">6</div>Publish</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:600">10 Recommended Items <span id="sel-count" class="badge-count">0 selected</span></div>
+        <button class="btn btn-outline" onclick="selectAll()">Select All</button>
+      </div>
+
+      <div class="item-grid" id="item-grid">
+        <!-- Items rendered by JS -->
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;background:white;border-radius:10px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+        <div style="font-size:13px;color:var(--muted)">Select items to activate. Agents will handle sourcing, listing, pricing, and marketing.</div>
+        <button class="btn btn-primary btn-lg" id="activate-btn" onclick="goScreen('sourcing')" style="opacity:.4;pointer-events:none">Activate Selected →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ SOURCING AGENT ══════════════════════ -->
+    <div id="screen-sourcing" class="screen">
+      <div class="steps">
+        <div class="step done"><div class="step-dot">✓</div>Opportunities</div>
+        <div class="step done"><div class="step-dot">✓</div>Selected Items</div>
+        <div class="step active"><div class="step-dot">3</div>Sourcing</div>
+        <div class="step"><div class="step-dot">4</div>Suppliers</div>
+        <div class="step"><div class="step-dot">5</div>Activate</div>
+        <div class="step"><div class="step-dot">6</div>Publish</div>
+      </div>
+
+      <div class="card">
+        <div class="sec-h">🤝 Sourcing & Negotiation Agent Running</div>
+        <div class="sec-sh">Your agent is finding suppliers, drafting outreach emails, and negotiating on your behalf. Sit back.</div>
+        <div class="progress-bar"><div class="progress-fill" id="src-progress" style="width:0%"></div></div>
+        <div class="sourcing-feed" id="sourcing-feed">
+          <!-- Feed items added by JS -->
+        </div>
+        <div id="sourcing-done" style="display:none;margin-top:16px;text-align:center">
+          <button class="btn btn-primary btn-lg" onclick="goScreen('suppliers')">View Supplier Proposals →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ SUPPLIERS ══════════════════════ -->
+    <div id="screen-suppliers" class="screen">
+      <div class="steps">
+        <div class="step done"><div class="step-dot">✓</div>Opportunities</div>
+        <div class="step done"><div class="step-dot">✓</div>Selected Items</div>
+        <div class="step done"><div class="step-dot">✓</div>Sourcing</div>
+        <div class="step active"><div class="step-dot">4</div>Suppliers</div>
+        <div class="step"><div class="step-dot">5</div>Activate</div>
+        <div class="step"><div class="step-dot">6</div>Publish</div>
+      </div>
+
+      <div class="card">
+        <div class="sec-h">📋 Supplier Proposals Received</div>
+        <div class="sec-sh">Your agent received quotes from 6 suppliers across your 3 selected items. Select your preferred supplier for each item.</div>
+        <table class="sup-table" id="sup-table">
+          <thead><tr><th>Item</th><th>Supplier</th><th>MOQ</th><th>Unit Cost</th><th>Lead Time</th><th>Rating</th><th>Select</th></tr></thead>
+          <tbody id="sup-tbody"></tbody>
+        </table>
+        <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:12px;color:var(--muted)" id="sup-hint">Select one supplier per item to continue</div>
+          <button class="btn btn-primary btn-lg" id="sup-btn" onclick="goScreen('consent')" style="opacity:.4;pointer-events:none">Proceed with Selected Suppliers →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ CONSENT ══════════════════════ -->
+    <div id="screen-consent" class="screen">
+      <div class="steps">
+        <div class="step done"><div class="step-dot">✓</div>Opportunities</div>
+        <div class="step done"><div class="step-dot">✓</div>Selected Items</div>
+        <div class="step done"><div class="step-dot">✓</div>Sourcing</div>
+        <div class="step done"><div class="step-dot">✓</div>Suppliers</div>
+        <div class="step active"><div class="step-dot">5</div>Activate</div>
+        <div class="step"><div class="step-dot">6</div>Publish</div>
+      </div>
+
+      <div class="card">
+        <div style="text-align:center;margin-bottom:24px">
+          <div style="font-size:42px;margin-bottom:10px">🎯</div>
+          <div class="sec-h" style="font-size:18px">Almost there. Authorize your agents.</div>
+          <div class="sec-sh" style="font-size:14px">Turn on the agents you want to prepare your items. All drafts will be ready for your review before anything goes live.</div>
+        </div>
+        <div class="consent-grid">
+          <div class="consent-card on" id="cc-catalog" onclick="toggleConsent('catalog')">
+            <div class="cc-icon">📝</div>
+            <div class="cc-name">Catalog Agent</div>
+            <div class="cc-desc">Creates optimized title, description, attributes, keywords. Listing Quality Score: 92+.</div>
+            <button class="cc-toggle on" id="ct-catalog"></button>
+          </div>
+          <div class="consent-card on" id="cc-pricing" onclick="toggleConsent('pricing')">
+            <div class="cc-icon">💰</div>
+            <div class="cc-name">Pricing Agent</div>
+            <div class="cc-desc">Sets competitive launch price, configures Repricer, ensures Buy Box eligibility.</div>
+            <button class="cc-toggle on" id="ct-pricing"></button>
+          </div>
+          <div class="consent-card on" id="cc-marketing" onclick="toggleConsent('marketing')">
+            <div class="cc-icon">📣</div>
+            <div class="cc-name">Marketing Agent</div>
+            <div class="cc-desc">Creates sponsored search strategy, social content, creator brief, launch calendar.</div>
+            <button class="cc-toggle on" id="ct-marketing"></button>
+          </div>
+        </div>
+        <div style="background:var(--blue-l);border-left:3px solid var(--blue);padding:10px 14px;border-radius:0 6px 6px 0;font-size:13px;color:var(--blue-d);margin-bottom:20px">
+          🤖 <strong>Agents work in the background.</strong> You'll review and approve everything before it goes live. Nothing publishes without your final click.
+        </div>
+        <div style="text-align:center">
+          <button class="btn btn-success btn-xl" onclick="goScreen('drafting')">✓ Start Agents</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ DRAFTING ══════════════════════ -->
+    <div id="screen-drafting" class="screen">
+      <div class="steps">
+        <div class="step done"><div class="step-dot">✓</div>Opportunities</div>
+        <div class="step done"><div class="step-dot">✓</div>Selected Items</div>
+        <div class="step done"><div class="step-dot">✓</div>Sourcing</div>
+        <div class="step done"><div class="step-dot">✓</div>Suppliers</div>
+        <div class="step done"><div class="step-dot">✓</div>Activate</div>
+        <div class="step active"><div class="step-dot">6</div>Publish</div>
+      </div>
+      <div class="card" style="text-align:center;padding:32px">
+        <div style="font-size:48px;margin-bottom:16px">⚙️</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:6px">Agents are preparing your items</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Creating listings, setting prices, drafting marketing content…</div>
+        <div class="progress-bar"><div class="progress-fill" id="draft-progress" style="width:0%;max-width:500px;margin:0 auto"></div></div>
+        <div id="draft-feed" style="margin-top:20px;display:flex;flex-direction:column;gap:8px;max-width:500px;margin:20px auto 0"></div>
+        <div id="drafting-done" style="display:none;margin-top:20px">
+          <button class="btn btn-primary btn-lg" onclick="goScreen('publish')">Review & Publish →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ PUBLISH ══════════════════════ -->
+    <div id="screen-publish" class="screen">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div>
+          <div style="font-size:18px;font-weight:700">Review & Publish</div>
+          <div style="font-size:12px;color:var(--muted)">All items are ready. Review and publish to go live on Walmart.com.</div>
+        </div>
+        <button class="btn btn-success btn-lg" onclick="publishAll()">🚀 Publish All Items</button>
+      </div>
+      <div id="draft-items"></div>
+    </div>
+
+    <!-- ══════════════════════ SUCCESS ══════════════════════ -->
+    <div id="screen-success" class="screen">
+      <div class="success-screen">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">3 Items Now Live on Walmart.com</div>
+        <div class="success-sub">Your agents did the heavy lifting. You hit publish.</div>
+        <div class="impact-row">
+          <div class="impact-box">
+            <div class="impact-num">+$50K</div>
+            <div class="impact-lbl">Projected — First 7 Days</div>
+          </div>
+          <div class="impact-box">
+            <div class="impact-num">+$127K</div>
+            <div class="impact-lbl">Projected — First 30 Days</div>
+          </div>
+          <div class="impact-box">
+            <div class="impact-num">3 hrs</div>
+            <div class="impact-lbl">Total Time (was 3+ weeks)</div>
+          </div>
+        </div>
+        <div style="background:var(--blue-l);border-radius:10px;padding:20px;max-width:600px;margin:0 auto;text-align:left">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-d);margin-bottom:8px">🤖 Agents are still working for you</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.6">Your pricing agent is monitoring the Buy Box. Your catalog agent is tracking LQS and making improvements. Your marketing agent is optimizing your sponsored search campaigns.</div>
+        </div>
+        <button class="btn btn-primary btn-lg" style="margin-top:24px" onclick="goScreen('home')">← Back to Home</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="t-ico">✅</span><span id="t-msg">Done</span></div>
+
+<script>
+// ── DATA ────────────────────────────────────────
+const items = [
+  {id:1,emoji:'🪑',name:'Ergonomic Mesh Chair with Footrest',cat:'Office Furniture',demand:96,gmv:'$8,400/mo',cf:true,selected:false},
+  {id:2,emoji:'🛋️',name:'2-Seater Fabric Sofa',cat:'Living Room Furniture',demand:88,gmv:'$12,200/mo',cf:true,selected:false},
+  {id:3,emoji:'💻',name:'Adjustable Standing Desk 55"',cat:'Office Furniture',demand:94,gmv:'$9,600/mo',cf:true,selected:false},
+  {id:4,emoji:'🛏️',name:'Queen Platform Bed Frame w/ Storage',cat:'Bedroom',demand:82,gmv:'$7,800/mo',cf:false,selected:false},
+  {id:5,emoji:'📦',name:'3-Shelf Industrial Bookcase',cat:'Storage',demand:76,gmv:'$4,200/mo',cf:false,selected:false},
+  {id:6,emoji:'🪞',name:'Full-Length LED Mirror',cat:'Bedroom Décor',demand:91,gmv:'$6,600/mo',cf:true,selected:false},
+  {id:7,emoji:'🎮',name:'Racing Gaming Chair with Footrest',cat:'Gaming',demand:87,gmv:'$11,000/mo',cf:true,selected:false},
+  {id:8,emoji:'🪴',name:'Large Outdoor Patio Set (4pc)',cat:'Patio & Garden',demand:79,gmv:'$14,500/mo',cf:false,selected:false},
+  {id:9,emoji:'🔦',name:'Floor Lamp with USB Charging Port',cat:'Lighting',demand:84,gmv:'$3,800/mo',cf:false,selected:false},
+  {id:10,emoji:'🧺',name:'Over-Door Organizer 3-Pack',cat:'Storage',demand:71,gmv:'$2,900/mo',cf:false,selected:false},
+];
+
+const selectedItems = [];
+let supplierPicks = {};
+
+// ── NAVIGATION ────────────────────────────────
+const titles = {
+  home:['Home','Welcome back, Walker'],
+  opportunities:['Seller Expansion Studio','Step 2 of 6 — Select items to activate'],
+  sourcing:['Seller Expansion Studio','Step 3 of 6 — Sourcing & Negotiation Agent'],
+  suppliers:['Seller Expansion Studio','Step 4 of 6 — Choose your suppliers'],
+  consent:['Seller Expansion Studio','Step 5 of 6 — Authorize agents'],
+  drafting:['Seller Expansion Studio','Step 6 of 6 — Agents preparing your listings'],
+  publish:['Seller Expansion Studio','Step 6 of 6 — Review & Publish'],
+  success:['Seller Expansion Studio','Items live on Walmart.com 🎉'],
+};
+
+function goScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  const t = titles[id]||[id,''];
+  document.getElementById('pg-title').textContent = t[0];
+  document.getElementById('pg-sub').textContent = t[1];
+  if(id==='home') document.getElementById('nav-home').classList.add('active');
+  if(id!=='home') document.getElementById('nav-studio').classList.add('active');
+  // Screen-specific init
+  if(id==='opportunities') renderItems();
+  if(id==='sourcing') runSourcingAgent();
+  if(id==='suppliers') renderSuppliers();
+  if(id==='drafting') runDraftingAgent();
+  if(id==='publish') renderDraftItems();
+}
+
+// ── ITEMS ─────────────────────────────────────
+function renderItems() {
+  const grid = document.getElementById('item-grid');
+  grid.innerHTML = items.map(item=>`
+    <div class="item-card${item.selected?' selected':''}" id="ic-${item.id}" onclick="toggleItem(${item.id})">
+      <div class="ic-check" id="ck-${item.id}">${item.selected?'✓':''}</div>
+      <div class="ic-body">
+        <div style="font-size:22px;margin-bottom:4px">${item.emoji}</div>
+        <div class="ic-name">${item.name}</div>
+        <div class="ic-meta">
+          <span class="ic-tag tag-demand">🔥 Demand ${item.demand}</span>
+          <span class="ic-tag tag-gmv">💰 ${item.gmv}</span>
+          ${item.cf?'<span class="ic-tag tag-cf">⭐ Customer Fav</span>':''}
+        </div>
+        <div class="ic-bar"><div class="ic-fill" style="width:${item.demand}%"></div></div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleItem(id) {
+  const item = items.find(i=>i.id===id);
+  item.selected = !item.selected;
+  const card = document.getElementById('ic-'+id);
+  const ck = document.getElementById('ck-'+id);
+  card.classList.toggle('selected',item.selected);
+  ck.textContent = item.selected?'✓':'';
+  const count = items.filter(i=>i.selected).length;
+  const badge = document.getElementById('sel-count');
+  badge.textContent = count+' selected';
+  const btn = document.getElementById('activate-btn');
+  btn.style.opacity = count>0?'1':'0.4';
+  btn.style.pointerEvents = count>0?'all':'none';
+}
+
+function selectAll() {
+  items.forEach(i=>i.selected=true);
+  renderItems();
+  document.getElementById('sel-count').textContent='10 selected';
+  document.getElementById('activate-btn').style.opacity='1';
+  document.getElementById('activate-btn').style.pointerEvents='all';
+}
+
+// ── SOURCING AGENT ─────────────────────────────
+function runSourcingAgent() {
+  const selected = items.filter(i=>i.selected).slice(0,3);
+  const feed = document.getElementById('sourcing-feed');
+  feed.innerHTML = '';
+  const steps = [];
+  selected.forEach(item=>{
+    steps.push({icon:'🔍',title:`Finding suppliers for "${item.name}"`,sub:'Searching Walmart supplier network + external sources',status:'s-wait'});
+    steps.push({icon:'📧',title:`Drafting outreach emails — ${item.name}`,sub:'MOQ, unit cost, lead time, certifications',status:'s-wait'});
+    steps.push({icon:'🤝',title:`Quotes received — ${item.name}`,sub:'3 suppliers responded with competitive pricing',status:'s-wait'});
+  });
+  steps.forEach((s,i)=>{
+    const div = document.createElement('div');
+    div.className='sf-item';
+    div.id='sf-'+i;
+    div.innerHTML=`<div class="sf-icon sf-a">${s.icon}</div><div class="sf-body"><div class="sf-title">${s.title}</div><div class="sf-sub">${s.sub}</div></div><span class="sf-status s-wait" id="ss-${i}">Queued</span>`;
+    feed.appendChild(div);
+  });
+
+  let i=0;
+  const prog = document.getElementById('src-progress');
+  function tick(){
+    if(i>=steps.length){
+      prog.style.width='100%';
+      setTimeout(()=>document.getElementById('sourcing-done').style.display='block',400);
+      return;
+    }
+    prog.style.width=Math.round((i/steps.length)*100)+'%';
+    const icon = document.getElementById('sf-'+i);
+    const status = document.getElementById('ss-'+i);
+    icon.querySelector('.sf-icon').className='sf-icon sf-b';
+    status.textContent='Running'; status.className='sf-status s-run';
+    setTimeout(()=>{
+      icon.querySelector('.sf-icon').className='sf-icon sf-g';
+      status.textContent='Done'; status.className='sf-status s-done';
+      i++; setTimeout(tick,300);
+    },700);
+  }
+  setTimeout(tick,500);
+}
+
+// ── SUPPLIERS ─────────────────────────────────
+function renderSuppliers() {
+  const selected = items.filter(i=>i.selected).slice(0,3);
+  supplierPicks = {};
+  const suppliers = [
+    ['Shenzhen FurniPro Co.','500 units','$42.50','14 days',4.8],
+    ['Guangzhou Elite Mfg.','300 units','$48.00','10 days',4.6],
+    ['Dongguan Comfort Ltd.','1000 units','$38.90','21 days',4.5],
+  ];
+  const tbody = document.getElementById('sup-tbody');
+  tbody.innerHTML = '';
+  selected.forEach((item,idx)=>{
+    const s = suppliers[idx];
+    const row = `<tr>
+      <td><strong>${item.emoji} ${item.name.substring(0,30)}...</strong></td>
+      <td>${s[0]}</td>
+      <td>${s[1]}</td>
+      <td><strong>$${(parseFloat(s[2])+idx*2).toFixed(2)}</strong></td>
+      <td>${s[3]}</td>
+      <td><span class="star-r">${'★'.repeat(Math.floor(s[4]))}</span> ${s[4]}</td>
+      <td><button class="sup-sel" id="sp-${item.id}" onclick="pickSupplier(${item.id},this)">${supplierPicks[item.id]?'✓ Selected':'Select'}</button></td>
+    </tr>`;
+    tbody.innerHTML += row;
+  });
+}
+
+function pickSupplier(id, btn) {
+  supplierPicks[id] = true;
+  btn.textContent = '✓ Selected';
+  btn.className = 'sup-sel picked';
+  const count = Object.keys(supplierPicks).length;
+  const total = items.filter(i=>i.selected).slice(0,3).length;
+  document.getElementById('sup-hint').textContent = `${count} of ${total} suppliers selected`;
+  const supBtn = document.getElementById('sup-btn');
+  supBtn.style.opacity = count>=total?'1':'0.4';
+  supBtn.style.pointerEvents = count>=total?'all':'none';
+}
+
+// ── CONSENT ─────────────────────────────────────
+const consentState = {catalog:true,pricing:true,marketing:true};
+function toggleConsent(key) {
+  consentState[key] = !consentState[key];
+  document.getElementById('cc-'+key).classList.toggle('on',consentState[key]);
+  document.getElementById('ct-'+key).classList.toggle('on',consentState[key]);
+}
+
+// ── DRAFTING AGENT ─────────────────────────────
+function runDraftingAgent() {
+  const selected = items.filter(i=>i.selected).slice(0,3);
+  const feed = document.getElementById('draft-feed');
+  feed.innerHTML = '';
+  const prog = document.getElementById('draft-progress');
+  const steps = [];
+  selected.forEach(item=>{
+    if(consentState.catalog) steps.push(`📝 Created listing for "${item.name.substring(0,25)}..." — LQS: 93`);
+    if(consentState.pricing) steps.push(`💰 Set competitive price for "${item.name.substring(0,25)}..." — $${(89+Math.random()*100).toFixed(2)}`);
+    if(consentState.marketing) steps.push(`📣 Marketing strategy ready for "${item.name.substring(0,25)}..."`);
+  });
+  let i=0;
+  function tick(){
+    if(i>=steps.length){
+      prog.style.width='100%';
+      setTimeout(()=>document.getElementById('drafting-done').style.display='block',400);
+      return;
+    }
+    prog.style.width=Math.round((i/steps.length)*100)+'%';
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:8px;font-size:12px;color:#166534;background:#DCFCE7;padding:6px 12px;border-radius:6px';
+    div.innerHTML='<span>✅</span><span>'+steps[i]+'</span>';
+    feed.appendChild(div);
+    i++; setTimeout(tick,500);
+  }
+  setTimeout(tick,400);
+}
+
+// ── DRAFT ITEMS ────────────────────────────────
+function renderDraftItems() {
+  const selected = items.filter(i=>i.selected).slice(0,3);
+  const prices = ['$189.99','$449.99','$259.99'];
+  const container = document.getElementById('draft-items');
+  container.innerHTML = selected.map((item,idx)=>`
+    <div class="draft-card">
+      <div class="dc-img">${item.emoji}</div>
+      <div class="dc-body">
+        <div class="dc-name">Walker's ${item.name}</div>
+        <div class="dc-price">${prices[idx]}</div>
+        <div class="dc-tags">
+          <span style="font-size:10px;background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:8px;font-weight:600">✓ Listing Ready</span>
+          <span style="font-size:10px;background:#DBEAFE;color:#1E40AF;padding:2px 8px;border-radius:8px;font-weight:600">✓ Price Set</span>
+          <span style="font-size:10px;background:#EDE9FE;color:#5B21B6;padding:2px 8px;border-radius:8px;font-weight:600">✓ Marketing Ready</span>
+        </div>
+        <div class="dc-lqs">
+          <span>LQS</span>
+          <div class="lqs-bar"><div class="lqs-fill" style="width:93%"></div></div>
+          <span style="font-weight:700;color:#166534">93 / 100</span>
+        </div>
+        <div class="dc-actions">
+          <button class="btn btn-outline">👁 Preview</button>
+          <button class="btn btn-primary" onclick="toast('🚀','${item.name.substring(0,20)} published!')">Publish →</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function publishAll() {
+  goScreen('success');
+}
+
+// ── TOAST ─────────────────────────────────────
+function toast(ico,msg){
+  const t=document.getElementById('toast');
+  document.getElementById('t-ico').textContent=ico;
+  document.getElementById('t-msg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// Init
+goScreen('home');
+</script>
+</body>
+</html>
