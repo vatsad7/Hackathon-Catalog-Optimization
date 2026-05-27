@@ -73,13 +73,13 @@ Open `prototype/seller_center_ai.html` in any browser. No server needed.
 
 ## Success Metrics
 
-| Metric | Baseline (Today) | Target (12 months) |
+| Metric |
 |--------|------------------|--------------------|
-| Listing Quality Score | 76% | 88%+ |
-| Time on catalog management | ~14 hrs/week | < 2 hrs/week |
-| GMV from AI-driven actions | $0 | $500K+/month |
-| Items at "Excellent" LQS | 121 / 311 (39%) | 220 / 311 (71%) |
-| SEO suggestion acceptance rate | 0% (manual) | 90%+ (automated) |
+| Listing Quality Score | 
+| Time on catalog management | 
+| GMV from AI-driven actions |
+| Items at "Excellent" LQS |
+| SEO suggestion acceptance rate | 
 
 ---
 
