@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seller Expansion Studio — Product Launchpad</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --blue:#0071CE;--blue-d:#0058A3;--blue-l:#E8F0FF;
+  --green:#166534;--text:#111827;--muted:#6B7280;--border:#E5E7EB;--white:#FFFFFF
+}
+
+html,body{width:100%;height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F5F9FF;color:var(--text)}
+
+/* MODALS */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;
+  z-index:1000;opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.modal.active{opacity:1;pointer-events:all}
+.modal-content{
+  background:white;border-radius:16px;padding:40px;max-width:600px;width:90%;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);animation:slideUp .4s ease;
+}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* BUTTONS */
+.btn{
+  padding:12px 24px;border-radius:8px;font-size:14px;font-weight:700;border:none;
+  cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--blue-d));color:white;box-shadow:0 4px 12px rgba(0,113,206,.25)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,113,206,.35)}
+.btn-secondary{background:white;border:2px solid var(--blue);color:var(--blue)}
+.btn-secondary:hover{background:var(--blue-l)}
+.btn-lg{padding:14px 32px;font-size:16px}
+
+.user-selector{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:24px;
+}
+.user-card{
+  background:linear-gradient(135deg,var(--blue-l),#E0F2FF);border:2px solid transparent;
+  border-radius:12px;padding:24px;cursor:pointer;transition:all .3s;text-align:center;
+}
+.user-card:hover{border-color:var(--blue);transform:translateY(-4px);box-shadow:0 12px 24px rgba(0,113,206,.2)}
+.user-card.selected{background:linear-gradient(135deg,var(--blue),var(--blue-d));color:white;border-color:white}
+.user-card h3{font-size:18px;margin-bottom:8px}
+.user-card p{font-size:12px;color:var(--muted);margin-bottom:16px}
+.user-card .user-card.selected p{color:rgba(255,255,255,.8)}
+.user-icon{font-size:40px;margin-bottom:12px}
+
+/* TOUR CONTAINER */
+.tour-container{
+  position:fixed;inset:0;display:none;z-index:999;pointer-events:none;
+}
+.tour-container.active{display:block;pointer-events:all}
+
+/* HIGHLIGHT OVERLAY */
+.tour-overlay{
+  position:absolute;background:rgba(0,0,0,.7);border-radius:12px;animation:fadeIn .3s;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.7);
+  transition:all .3s;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* TOUR TOOLTIP */
+.tour-tooltip{
+  position:fixed;background:white;border-radius:12px;padding:16px 20px;
+  box-shadow:0 8px 32px rgba(0,0,0,.15);max-width:280px;z-index:1001;
+  animation:tooltipIn .3s ease;font-size:13px;line-height:1.6;
+}
+@keyframes tooltipIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.tour-tooltip h4{font-weight:700;margin-bottom:8px;color:var(--blue)}
+.tour-tooltip p{color:var(--muted);margin-bottom:12px}
+.tour-nav{display:flex;gap:8px;margin-top:12px;justify-content:space-between}
+.tour-nav button{
+  background:var(--blue);color:white;border:none;padding:6px 12px;border-radius:6px;
+  font-size:12px;cursor:pointer;transition:all .2s;
+}
+.tour-nav button:hover{background:var(--blue-d)}
+.tour-dots{
+  display:flex;gap:4px;margin:0 auto;
+}
+.tour-dot{
+  width:6px;height:6px;border-radius:50%;background:#D1D5DB;transition:all .2s;
+}
+.tour-dot.active{background:var(--blue);width:24px;border-radius:3px}
+
+/* MAIN DEMO */
+.demo-main{
+  display:none;
+  &.active{display:flex}
+}
+
+.sidebar{
+  width:200px;background:#FAFBFC;border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  box-shadow:2px 0 8px rgba(0,113,206,.05);
+}
+.sb-header{
+  padding:16px 14px;border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,rgba(255,255,255,.8),rgba(240,249,255,.5));
+  backdrop-filter:blur(10px);
+}
+.sb-logo{
+  color:var(--blue);font-weight:700;font-size:13px;text-transform:uppercase;
+  letter-spacing:.5px;display:flex;align-items:center;gap:6px;
+}
+.sb-logo::before{content:'⊞';font-size:14px}
+.nav-item{
+  display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;
+  font-size:12.5px;color:#4B5563;transition:all .2s;margin:0 4px;border-radius:6px;
+}
+.nav-item:hover{background:rgba(0,113,206,.08);color:var(--blue)}
+.nav-item.active{
+  background:linear-gradient(135deg,rgba(0,113,206,.15),rgba(0,113,206,.08));
+  color:var(--blue);font-weight:600;border-left:3px solid var(--blue);padding-left:11px;
+}
+
+.main-content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{
+  background:var(--white);border-bottom:1px solid var(--border);padding:12px 24px;
+  display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.04);flex-shrink:0;
+}
+.topbar h1{font-size:17px;font-weight:700}
+.topbar-right{display:flex;gap:12px}
+.tour-btn{
+  background:linear-gradient(135deg,var(--blue),var(--blue-d));color:white;
+  border:none;padding:8px 16px;border-radius:8px;font-size:12px;
+  cursor:pointer;font-weight:700;transition:all .2s;
+}
+.tour-btn:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(0,113,206,.3)}
+.tour-btn.active{background:#10B981;box-shadow:0 0 0 3px rgba(16,185,129,.2)}
+
+.content{
+  flex:1;overflow-y:auto;padding:24px 32px;
+  background:linear-gradient(135deg,#F5F9FF 0%,#E8F0FF 50%,#F0F4FF 100%);
+}
+
+.screen{display:none}
+.screen.active{display:block;animation:fadeIn .4s}
+
+.hero-banner{
+  background:linear-gradient(135deg,var(--blue),var(--blue-d));color:white;
+  border-radius:14px;padding:28px 32px;margin-bottom:24px;cursor:pointer;
+  transition:all .3s;position:relative;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,113,206,.25);
+}
+.hero-banner::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 20% 50%,rgba(255,255,255,.1),transparent),
+             radial-gradient(circle at 80% 80%,rgba(255,255,255,.05),transparent);
+  pointer-events:none;
+}
+.hero-banner:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,113,206,.35)}
+.hb-content{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;gap:24px}
+.hb-left h2{font-size:18px;font-weight:700;margin-bottom:6px}
+.hb-left p{font-size:13px;opacity:.9;line-height:1.5;max-width:400px}
+.hb-right{text-align:center;flex-shrink:0}
+.hb-number{font-size:56px;font-weight:800;line-height:1}
+
+.card{
+  background:white;border-radius:12px;padding:20px;
+  box-shadow:0 2px 8px rgba(0,113,206,.08);margin-bottom:18px;
+  border:1px solid rgba(0,113,206,.08);transition:all .3s;position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,113,206,.02),transparent);
+  pointer-events:none;
+}
+.card:hover{
+  box-shadow:0 8px 24px rgba(0,113,206,.12);transform:translateY(-2px);
+}
+.card-title{font-size:15px;font-weight:700;margin-bottom:14px}
+
+/* HOTSPOT */
+.hotspot{
+  position:absolute;width:12px;height:12px;background:var(--blue);border-radius:50%;
+  border:3px solid white;cursor:pointer;z-index:100;animation:pulse 2s infinite;
+  box-shadow:0 0 0 0 rgba(0,113,206,.7);
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(0,113,206,.7)}
+  70%{box-shadow:0 0 0 10px rgba(0,113,206,0)}
+  100%{box-shadow:0 0 0 0 rgba(0,113,206,0)}
+}
+
+/* STATS */
+.stat-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0;
+}
+.stat-box{
+  background:white;border-radius:10px;padding:20px;
+  box-shadow:0 2px 8px rgba(0,113,206,.08);text-align:center;
+}
+.stat-num{font-size:28px;font-weight:800;color:var(--blue);margin-bottom:4px}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* WELCOME SCREEN */
+.welcome-screen{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;padding:40px;text-align:center;
+}
+.welcome-logo{font-size:64px;margin-bottom:20px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.welcome-screen h1{font-size:40px;font-weight:800;margin-bottom:12px;background:linear-gradient(135deg,var(--blue),var(--blue-d));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.welcome-screen p{font-size:16px;color:var(--muted);max-width:500px;line-height:1.8;margin-bottom:32px}
+
+.feature-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0;
+}
+.feature-box{
+  background:white;border-radius:10px;padding:16px;
+  box-shadow:0 2px 8px rgba(0,113,206,.08);text-align:center;
+}
+.feature-icon{font-size:32px;margin-bottom:8px}
+.feature-title{font-size:13px;font-weight:700;color:var(--text)}
+.feature-desc{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .user-selector{grid-template-columns:1fr}
+  .hb-content{flex-direction:column;text-align:center}
+  .feature-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- USER TYPE SELECTOR MODAL -->
+<div id="userModal" class="modal active">
+  <div class="modal-content">
+    <h1 style="font-size:28px;margin-bottom:8px">Welcome to Seller Expansion Studio</h1>
+    <p style="color:var(--muted);margin-bottom:24px">Choose your role to get started with a personalized experience</p>
+    
+    <div class="user-selector" id="userSelector">
+      <div class="user-card" data-user="seller" onclick="selectUser('seller', this)">
+        <div class="user-icon">🛍️</div>
+        <h3>Seller</h3>
+        <p>Expand your catalog and activate new items</p>
+      </div>
+      <div class="user-card" data-user="manager" onclick="selectUser('manager', this)">
+        <div class="user-icon">📊</div>
+        <h3>Walmart Manager</h3>
+        <p>Monitor seller growth and GMV impact</p>
+      </div>
+      <div class="user-card" data-user="partner" onclick="selectUser('partner', this)">
+        <div class="user-icon">🤝</div>
+        <h3>Partner/Integration</h3>
+        <p>Connect systems and share data</p>
+      </div>
+      <div class="user-card" data-user="investor" onclick="selectUser('investor', this)">
+        <div class="user-icon">💰</div>
+        <h3>Investor/Stakeholder</h3>
+        <p>Understand the business opportunity</p>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;display:flex;gap:12px">
+      <button class="btn btn-secondary" style="flex:1" onclick="skipTour()">Quick Demo →</button>
+      <button class="btn btn-primary" style="flex:1" id="startBtn" disabled onclick="startTour()">Start Guided Tour</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOUR CONTAINER -->
+<div id="tourContainer" class="tour-container">
+  <div id="tourOverlay" class="tour-overlay"></div>
+  <div id="tourTooltip" class="tour-tooltip">
+    <h4 id="tooltipTitle">Step</h4>
+    <p id="tooltipText">Description</p>
+    <div class="tour-nav">
+      <div class="tour-dots" id="tourDots"></div>
+      <div style="display:flex;gap:6px">
+        <button onclick="prevTourStep()">← Back</button>
+        <button onclick="nextTourStep()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN DEMO -->
+<div class="demo-main" id="demoMain">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-header">
+      <div class="sb-logo">Seller Center</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;font-weight:500">Your Store</div>
+    </div>
+    <nav style="flex:1;overflow-y:auto;padding:8px">
+      <div class="nav-item active" id="nav-home" onclick="goScreen('home')">🏠 Home</div>
+      <div class="nav-item" onclick="">📦 Catalog</div>
+      <div class="nav-item" onclick="">🏷️ Pricing</div>
+      <div class="nav-item" onclick="">📊 Performance</div>
+      <div class="nav-item" onclick="">📈 Analytics</div>
+      <div class="nav-item" onclick="goScreen('opportunities')" style="background:linear-gradient(135deg,rgba(0,113,206,.12),rgba(79,70,229,.08));border:1.5px solid rgba(0,113,206,.2);font-weight:700;color:var(--blue-d)">
+        🤖 Expansion Studio ✦
+      </div>
+    </nav>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <h1 id="pg-title">Seller Center</h1>
+      </div>
+      <div class="topbar-right">
+        <button class="tour-btn" id="tourToggle" onclick="toggleTour()">📍 Start Tour</button>
+        <button class="tour-btn" style="background:white;color:var(--blue);border:2px solid var(--blue)" onclick="backToUserSelect()">← Back</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- HOME SCREEN -->
+      <div id="screen-home" class="screen active">
+        <div class="hero-banner" id="hotspot-hero" onclick="goScreen('opportunities')" style="position:relative">
+          <div class="hb-content">
+            <div class="hb-left">
+              <h2>🚀 Unlock New Growth Opportunities</h2>
+              <p>Our AI has identified 10 high-demand items you should be selling. We handle sourcing, listing, pricing, and marketing.</p>
+            </div>
+            <div class="hb-right">
+              <div class="hb-number">10</div>
+              <div style="font-size:11px;opacity:.8;margin-top:4px">Items Ready</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="stat-num">0</div>
+            <div class="stat-lbl">Today's Orders</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">48%</div>
+            <div class="stat-lbl">Listing Quality</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">15%</div>
+            <div class="stat-lbl">CF Opportunities</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPPORTUNITIES SCREEN -->
+      <div id="screen-opportunities" class="screen">
+        <div class="card" id="hotspot-items">
+          <div class="card-title">10 Recommended Items</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Select items to activate and agents will handle everything</p>
+          
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+            <div style="background:linear-gradient(135deg,rgba(0,113,206,.08),rgba(0,113,206,.04));border:1px solid rgba(0,113,206,.1);border-radius:8px;padding:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+              <div style="font-size:20px;margin-bottom:6px">🪑</div>
+              <div style="font-size:12px;font-weight:700">Ergonomic Mesh Chair</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">🔥 Demand: 96 · 💰 $8.4K/mo</div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(0,113,206,.08),rgba(0,113,206,.04));border:1px solid rgba(0,113,206,.1);border-radius:8px;padding:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+              <div style="font-size:20px;margin-bottom:6px">🛋️</div>
+              <div style="font-size:12px;font-weight:700">2-Seater Fabric Sofa</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">🔥 Demand: 88 · 💰 $12.2K/mo</div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(0,113,206,.08),rgba(0,113,206,.04));border:1px solid rgba(0,113,206,.1);border-radius:8px;padding:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+              <div style="font-size:20px;margin-bottom:6px">💻</div>
+              <div style="font-size:12px;font-weight:700">Standing Desk 55"</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">🔥 Demand: 94 · 💰 $9.6K/mo</div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(0,113,206,.08),rgba(0,113,206,.04));border:1px solid rgba(0,113,206,.1);border-radius:8px;padding:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+              <div style="font-size:20px;margin-bottom:6px">🎮</div>
+              <div style="font-size:12px;font-weight:700">Gaming Chair</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">🔥 Demand: 87 · 💰 $11K/mo</div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" style="margin-top:20px;width:100%" id="hotspot-activate" onclick="activateDemo()">
+            Activate Items & Watch Agents Work →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// TOUR DATA
+const tourSteps = {
+  seller: [
+    {selector:'#hotspot-hero',title:'🚀 Growth Opportunity',text:'This banner shows you 10 high-demand items identified by Walmart AI. Items customers are searching for but sellers aren\'t supplying yet.'},
+    {selector:'#nav-home',title:'📍 Home Dashboard',text:'Your daily metrics: orders, listing quality score, and customer favorite opportunities. Everything you need at a glance.'},
+    {selector:'#hotspot-items',title:'📋 Item Recommendations',text:'Each item shows demand score, estimated monthly GMV, and customer favorite status. Click to select items you want to activate.'},
+    {selector:'#hotspot-activate',title:'🤖 Agents Take Over',text:'Once you select items, 4 agents work in parallel: Sourcing finds suppliers, Catalog creates listing, Pricing sets competitive price, Marketing creates content.'},
+  ],
+  manager: [
+    {selector:'#hotspot-hero',title:'📊 Seller Expansion Metrics',text:'Track new item activations. This buyer shows 10 identified opportunities per seller. Monitor activation rate and GMV impact.'},
+    {selector:'#nav-home',title:'💡 Performance Dashboard',text:'Real-time view: active sellers, items activated, GMV attributed to AI-powered catalog expansion vs. manual work.'},
+  ],
+  partner: [
+    {selector:'#hotspot-hero',title:'🔌 API Integration Point',text:'Connect your system here. Seller data, item recommendations, and agent status updates flow via REST APIs or webhooks.'},
+    {selector:'#hotspot-activate',title:'⚙️ Agent Orchestration',text:'Your system receives real-time events: supplier found, listing created, price set, marketing launched. Full visibility into agent workflows.'},
+  ],
+  investor: [
+    {selector:'#hotspot-hero',title:'💰 GMV Opportunity',text:'Each item represents $7K-$15K monthly GMV. 10 items × 1000 sellers = $70-150M new marketplace GMV in one quarter.'},
+    {selector:'#hotspot-items',title:'⏱️ Time-to-Market',text:'Traditional flow: 2-4 weeks per item (sourcing, listing, pricing, marketing). Our agents: 3 hours. 8x speed improvement = faster revenue.'},
+  ],
+};
+
+let currentTour = null;
+let currentStep = 0;
+let isTourActive = false;
+
+function selectUser(userType, element) {
+  document.querySelectorAll('.user-card').forEach(c => c.classList.remove('selected'));
+  element.classList.add('selected');
+  currentTour = userType;
+  document.getElementById('startBtn').disabled = false;
+}
+
+function startTour() {
+  if (!currentTour) return;
+  document.getElementById('userModal').classList.remove('active');
+  document.getElementById('demoMain').classList.add('active');
+  currentStep = 0;
+  isTourActive = true;
+  document.getElementById('tourContainer').classList.add('active');
+  document.getElementById('tourToggle').classList.add('active');
+  showTourStep();
+  renderTourDots();
+}
+
+function skipTour() {
+  document.getElementById('userModal').classList.remove('active');
+  document.getElementById('demoMain').classList.add('active');
+  document.getElementById('tourContainer').classList.remove('active');
+  document.getElementById('tourToggle').classList.remove('active');
+}
+
+function toggleTour() {
+  isTourActive = !isTourActive;
+  if (isTourActive) {
+    document.getElementById('tourContainer').classList.add('active');
+    document.getElementById('tourToggle').classList.add('active');
+    currentStep = 0;
+    showTourStep();
+  } else {
+    document.getElementById('tourContainer').classList.remove('active');
+    document.getElementById('tourToggle').classList.remove('active');
+  }
+}
+
+function showTourStep() {
+  if (!currentTour || !tourSteps[currentTour]) return;
+  const steps = tourSteps[currentTour];
+  if (currentStep >= steps.length) currentStep = steps.length - 1;
+  
+  const step = steps[currentStep];
+  const el = document.querySelector(step.selector);
+  
+  if (el) {
+    const rect = el.getBoundingClientRect();
+    const overlay = document.getElementById('tourOverlay');
+    overlay.style.left = (rect.left - 8) + 'px';
+    overlay.style.top = (rect.top - 8) + 'px';
+    overlay.style.width = (rect.width + 16) + 'px';
+    overlay.style.height = (rect.height + 16) + 'px';
+    
+    const tooltip = document.getElementById('tourTooltip');
+    let tooltipLeft = rect.left + rect.width / 2 - 140;
+    let tooltipTop = rect.bottom + 20;
+    
+    if (tooltipTop + 150 > window.innerHeight) {
+      tooltipTop = rect.top - 160;
+    }
+    
+    tooltip.style.left = tooltipLeft + 'px';
+    tooltip.style.top = tooltipTop + 'px';
+    document.getElementById('tooltipTitle').textContent = step.title;
+    document.getElementById('tooltipText').textContent = step.text;
+  }
+}
+
+function renderTourDots() {
+  if (!currentTour || !tourSteps[currentTour]) return;
+  const dotsContainer = document.getElementById('tourDots');
+  dotsContainer.innerHTML = tourSteps[currentTour].map((_, i) => 
+    `<div class="tour-dot${i === currentStep ? ' active' : ''}"></div>`
+  ).join('');
+}
+
+function nextTourStep() {
+  if (!currentTour || !tourSteps[currentTour]) return;
+  if (currentStep < tourSteps[currentTour].length - 1) {
+    currentStep++;
+    showTourStep();
+    renderTourDots();
+  }
+}
+
+function prevTourStep() {
+  if (currentStep > 0) {
+    currentStep--;
+    showTourStep();
+    renderTourDots();
+  }
+}
+
+function goScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  if (isTourActive) showTourStep();
+}
+
+function activateDemo() {
+  alert('🎉 Demo activated!\n\nIn the real product:\n✓ Sourcing agent finds suppliers\n✓ Catalog agent creates listings\n✓ Pricing agent sets competitive prices\n✓ Marketing agent creates content\n\nAll 4 agents work in parallel.');
+}
+
+function backToUserSelect() {
+  document.getElementById('userModal').classList.add('active');
+  document.getElementById('demoMain').classList.remove('active');
+  document.getElementById('tourContainer').classList.remove('active');
+  isTourActive = false;
+  currentStep = 0;
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  // Reset on load
+});
+</script>
+</body>
+</html>
